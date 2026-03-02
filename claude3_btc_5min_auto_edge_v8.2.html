@@ -1,0 +1,3615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTC 5m Tracker — Polymarket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06060b;
+    --surface: #0d0d14;
+    --surface-2: #13131d;
+    --border: #1a1a2e;
+    --text: #e8e8f0;
+    --text-dim: #6b6b80;
+    --green: #00e87b;
+    --green-bg: rgba(0,232,123,0.08);
+    --green-glow: rgba(0,232,123,0.15);
+    --red: #ff4466;
+    --red-bg: rgba(255,68,102,0.08);
+    --red-glow: rgba(255,68,102,0.15);
+    --accent: #7c6ff7;
+    --accent-dim: rgba(124,111,247,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 36px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #f7931a, #e8720c);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(247,147,26,0.25);
+  }
+
+  .brand-text h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .brand-text span {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 100px;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+  }
+
+  .live-dot.active {
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--green-glow); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px transparent; }
+  }
+
+  .market-question {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .market-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+
+  .market-title a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .market-title a:hover { color: var(--accent); }
+
+  .pm-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border: 1px solid rgba(124,111,247,0.25);
+    border-radius: 8px;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+  }
+
+  .pm-link:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+  }
+
+  .countdown-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+
+  .countdown-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .countdown-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .countdown-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .countdown-progress {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .countdown-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  .odds-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .odds-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .odds-card.up {
+    border-color: rgba(0,232,123,0.2);
+    background: linear-gradient(180deg, var(--green-bg) 0%, var(--surface) 60%);
+  }
+
+  .odds-card.down {
+    border-color: rgba(255,68,102,0.2);
+    background: linear-gradient(180deg, var(--red-bg) 0%, var(--surface) 60%);
+  }
+
+  .odds-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .odds-card.up .odds-label { color: var(--green); }
+  .odds-card.down .odds-label { color: var(--red); }
+
+  .odds-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .odds-card.up .odds-pct { color: var(--green); }
+  .odds-card.down .odds-pct { color: var(--red); }
+
+  .odds-cents {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .split-bar {
+    display: flex;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    gap: 2px;
+  }
+
+  .split-up {
+    background: var(--green);
+    border-radius: 3px 0 0 3px;
+    transition: width 0.6s ease;
+  }
+
+  .split-down {
+    background: var(--red);
+    border-radius: 0 3px 3px 0;
+    transition: width 0.6s ease;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .stat-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 14px;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+
+  .history-item:hover { background: var(--surface-2); }
+  .history-time { color: var(--text-dim); font-size: 12px; min-width: 80px; }
+  .history-odds { display: flex; gap: 16px; }
+  .history-up { color: var(--green); }
+  .history-down { color: var(--red); }
+
+  .history-result {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .result-up { background: var(--green-bg); color: var(--green); }
+  .result-down { background: var(--red-bg); color: var(--red); }
+  .result-pending { background: var(--accent-dim); color: var(--accent); }
+
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 0;
+    gap: 16px;
+  }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ── Edge Engine Styles ── */
+  .edge-panel {
+    background: var(--surface);
+    border: 1px solid rgba(124,111,247,0.35);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .edge-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+  }
+  .edge-panel h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edge-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .edge-stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .edge-stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+  }
+  .edge-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .edge-stat-value.pos { color: var(--green); }
+  .edge-stat-value.neg { color: var(--red); }
+  .edge-stat-value.neutral { color: var(--text); }
+  .edge-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .edge-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+  }
+  .edge-filter-row input[type="checkbox"] { cursor: pointer; }
+  .edge-filter-row input[type="range"] { width: 100px; }
+  .edge-filter-row span.val { color: var(--text); font-weight: 600; min-width: 30px; }
+  .signal-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+    margin: 12px 0 4px;
+  }
+  .signal-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease, background 0.5s ease;
+  }
+  .signal-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+  .edge-recommendation {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.4s;
+  }
+  .edge-recommendation.go { background: var(--green-bg); color: var(--green); border: 1px solid rgba(0,232,123,0.3); }
+  .edge-recommendation.wait { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,68,102,0.3); }
+  .edge-recommendation.neutral { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(124,111,247,0.25); }
+  .pnl-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .pnl-chip {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .pnl-chip.pos { color: var(--green); border-color: rgba(0,232,123,0.3); }
+  .pnl-chip.neg { color: var(--red); border-color: rgba(255,68,102,0.3); }
+  .btn-reset-pnl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-reset-pnl:hover { border-color: var(--red); color: var(--red); }
+
+  .footer {
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-connect {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-connect:hover { background: rgba(124,111,247,0.2); }
+  .btn-connect:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .wallet-addr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+  .usdce-balance {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--green);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  .trade-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .trade-panel h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .trade-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .trade-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .trade-field label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .trade-field input, .trade-field select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    min-width: 80px;
+  }
+  .trade-field input:focus, .trade-field select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .btn-trade {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--green);
+    color: var(--bg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-trade:hover { opacity: 0.9; }
+  .btn-trade:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-trade.down { background: var(--red); }
+  .buy-99-row {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .buy-99-row .label-99 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .buy-99-btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-99 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, box-shadow 0.2s;
+  }
+  .btn-99:hover { opacity: 0.9; }
+  .btn-99:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-99 { background: var(--accent); color: var(--bg); }
+  .btn-99.at-99 { box-shadow: 0 0 0 2px var(--text); }
+  .btn-sell-auto {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, box-shadow 0.2s;
+    background: var(--red);
+    color: #fff;
+  }
+  .btn-sell-auto:hover { opacity: 0.9; }
+  .btn-sell-auto:disabled { opacity: 0.5; cursor: not-allowed; }
+  .auto-sell-section {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .auto-sell-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+  .auto-sell-status.active { color: var(--red); }
+  .auto-sell-status .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    margin-right: 4px;
+  }
+  .auto-sell-status.active .dot {
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
+  }
+  .positions-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .positions-panel h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .positions-balance {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  .positions-balance strong { color: var(--green); }
+  .open-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .open-order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .open-order-item .side-up { color: var(--green); }
+  .open-order-item .side-down { color: var(--red); }
+  .open-order-item .order-id { color: var(--text-dim); font-size: 10px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .btn-cancel {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--red);
+    background: transparent;
+    color: var(--red);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .btn-cancel:hover { background: var(--red-bg); }
+  .trade-msg {
+    font-size: 12px;
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 20px;
+  }
+  .trade-msg.error { color: var(--red); }
+  .trade-msg.success { color: var(--green); }
+
+  .proxy-fallback {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .proxy-fallback input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .proxy-fallback input::placeholder { color: var(--text-dim); }
+  .btn-proxy {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .btn-proxy:hover { background: rgba(124,111,247,0.2); }
+
+  .local-server-help {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+  .local-server-help h4 {
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .local-server-help p { margin-bottom: 10px; color: var(--text-dim); line-height: 1.5; }
+  .local-server-help code {
+    display: block;
+    background: var(--bg);
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+  .local-server-help a { color: var(--accent); }
+
+  .debug-log {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    max-height: 150px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .debug-log.show { display: block; }
+
+  @media (max-width: 600px) {
+    .odds-pct { font-size: 36px; }
+    .countdown-time { font-size: 22px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">₿</div>
+      <div class="brand-text">
+        <h1>BTC 5m Tracker</h1>
+        <span>Polymarket Up/Down</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="wallet-addr" id="walletAddr" style="display:none;">—</div>
+      <div id="proxyFallback" class="proxy-fallback" style="display:none;">
+        <input type="text" id="proxyInput" placeholder="Proxy address (from polymarket.com/settings)" />
+        <button type="button" class="btn-proxy" id="btnUseProxy">Use proxy</button>
+      </div>
+      <button type="button" class="btn-connect" id="btnConnect" onclick="typeof connectMetaMask==='function'&&connectMetaMask()">Connect MetaMask</button>
+      <span class="usdce-balance" id="usdceBalance" style="display:none;">USDCe: $0.00</span>
+      <span class="trade-msg" id="connectStatus" style="font-size:11px;max-width:200px;"></span>
+      <div class="live-badge">
+        <div class="live-dot" id="liveDot"></div>
+        <span id="statusText">Connecting...</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="localServerHelp" class="local-server-help" style="display:none;">
+    <h4>Use MetaMask: serve this page over HTTP</h4>
+    <p>This page was opened from your computer (file://). Browsers block wallet extensions on file://. Serve the page locally, then open the link below.</p>
+    <p><strong>1.</strong> In a terminal, go to this file’s folder and run:</p>
+    <code id="localServerCommand">python3 -m http.server 8080</code>
+    <p><strong>2.</strong> Open in your browser:</p>
+    <p><a id="localServerUrl" href="#" target="_blank" rel="noopener">http://localhost:8080/</a></p>
+  </div>
+
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Finding active BTC 5m market...</div>
+    </div>
+  </div>
+
+  <div class="debug-log" id="debugLog"></div>
+
+  <div class="footer">
+    <span id="lastUpdate">—</span>
+    <span>Data from <a href="https://polymarket.com" target="_blank">Polymarket</a></span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<script>
+const GAMMA = 'https://gamma-api.polymarket.com';
+const CLOB = 'https://clob.polymarket.com';
+const PROXIES = [
+  url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+  url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+];
+let activeProxy = null;
+const INTERVAL = 300;
+let currentSlug = null;
+let timerInterval = null;
+/** @type {{ tokenIds: string[], isUpFirst: boolean }|null} */
+let clobTokenInfo = null;
+let tradingClient = null;
+let walletAddress = null;
+let pendingCreds = null;
+var autoBuy99Done = { up: false, down: false }; lastFiredLevelPrice = null; // true = this side has fired (any level)
+var lastFiredLevelPrice = null; // price (cents) of the level that actually triggered
+var currentMarketStartTs = null; // unix seconds, set when a market loads
+var waitingFor99 = false;
+var lastRenderedEvent = null;
+var claimAttemptedForSlug = null;
+var fastPollInterval = null;
+const FAST_POLL_MS = 350;
+const NEAR_TARGET_CENTS = 2;
+
+// Persist trade settings across re-renders
+var _savedTradeSize = '10'; try { localStorage.setItem('tradeSize', '10'); } catch(e) {}
+// ── Buy price ladder (up to 5 levels, first hit wins) ──────────────────────
+// Levels are checked lowest→highest. First price reached triggers the buy;
+// remaining levels are cancelled for that side.
+var BUY_LADDER_DEFAULTS = [
+  { enabled: true,  price: 85 },
+  { enabled: true,  price: 88 },
+  { enabled: true,  price: 91 },
+  { enabled: false, price: 94 },
+  { enabled: false, price: 97 },
+];
+var buyLadder = (function() {
+  try {
+    var s = JSON.parse(localStorage.getItem('buyLadder') || 'null');
+    if (Array.isArray(s) && s.length === 5) return s;
+  } catch(e) {}
+  return BUY_LADDER_DEFAULTS.map(function(l){ return Object.assign({},l); });
+})();
+function saveBuyLadder() { try { localStorage.setItem('buyLadder', JSON.stringify(buyLadder)); } catch(e) {} }
+var _savedAutoBuyPrice = String((buyLadder.find(function(l){return l.enabled;})||{price:85}).price); // compat
+var _savedAutoSellPrice = (function() { try { var v = localStorage.getItem('autoSellPrice'); return v; } catch(e) { return null; } })();
+if (_savedAutoSellPrice === null) { _savedAutoSellPrice = '95'; try { localStorage.setItem('autoSellPrice', '95'); } catch(e) {} }
+
+// Auto-sell tracking: pending buy orders we're watching for fills
+var _savedAutoSellEnabled = (function() { try { return localStorage.getItem('autoSellEnabled'); } catch(e) { return null; } })();
+var autoSellEnabled = _savedAutoSellEnabled === null ? true : _savedAutoSellEnabled === 'true';
+var pendingBuyOrders = []; // { orderId, side, tokenId, size, priceCents }
+var autoSellPollInterval = null;
+
+// Auto-size: trade size as % of balance
+var _savedAutoSizeEnabled = (function() { try { return localStorage.getItem('autoSizeEnabled'); } catch(e) { return null; } })();
+var _savedAutoSizePct = (function() { try { return localStorage.getItem('autoSizePct'); } catch(e) { return null; } })();
+var autoSizeEnabled = _savedAutoSizeEnabled === 'true';
+var autoSizePct = _savedAutoSizePct !== null ? parseFloat(_savedAutoSizePct) : 10;
+var lastKnownBalance = null; // updated when balance loads
+
+// Pre-signed orders for instant execution
+var _savedPreSignEnabled = (function() { try { return localStorage.getItem('preSignEnabled'); } catch(e) { return null; } })();
+var preSignEnabled = _savedPreSignEnabled === null ? true : _savedPreSignEnabled === 'true';
+var preSignedOrders = { up: null, down: null }; // { signedOrder, tokenId, price, size, priceCents }
+var preSignedSellOrders = { up: null, down: null }; // same shape, for SELL side
+var preSignInProgress = false;
+var preSignSlug = null; // slug of the market these were signed for
+var _cachedOrderImports = null; // cache { OrderType, Side } import
+
+function log(msg) {
+  console.log('[BTC5m]', msg);
+  const el = document.getElementById('debugLog');
+  if (el) { el.innerHTML += msg + '<br>'; el.scrollTop = el.scrollHeight; }
+}
+
+if (location.search.includes('debug')) {
+  document.getElementById('debugLog').classList.add('show');
+}
+
+// ── API fetch with proxy fallback ───────────────
+async function gfetch(path) {
+  const url = GAMMA + path;
+  if (activeProxy) {
+    try { const r = await fetch(activeProxy(url)); if (r.ok) return r.json(); } catch {}
+  }
+  try { const r = await fetch(url); if (r.ok) { activeProxy = null; return r.json(); } } catch {}
+  for (const p of PROXIES) {
+    try { const r = await fetch(p(url)); if (r.ok) { activeProxy = p; return r.json(); } } catch {}
+  }
+  return null;
+}
+
+// ── CLOB fetch (live order book prices) ─────────
+async function clobFetch(path, opts) {
+  const url = CLOB + path;
+  try {
+    const r = await fetch(url, opts);
+    if (r.ok) return r.json();
+  } catch {}
+  for (const p of PROXIES) {
+    try {
+      const r = await fetch(p(url), opts);
+      if (r.ok) return r.json();
+    } catch {}
+  }
+  return null;
+}
+
+// ── Slug helpers ────────────────────────────────
+function getBucket() { return Math.floor(Date.now() / 1000 / INTERVAL) * INTERVAL; }
+function slug(ts) { return `btc-updown-5m-${ts}`; }
+
+function etRange(ts) {
+  const s = new Date(ts * 1000);
+  const e = new Date((ts + INTERVAL) * 1000);
+  const f = d => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
+  return `${f(s)} – ${f(e)} ET`;
+}
+
+function etTime(ts) {
+  return new Date(ts * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
+}
+
+// ── Fetch event ─────────────────────────────────
+async function fetchEvent(s) {
+  // Try events endpoint (this is what polymarket.com/event/... uses)
+  let d = await gfetch(`/events?slug=${s}`);
+  if (d && d.length > 0) return d[0];
+
+  // Fallback: markets endpoint
+  d = await gfetch(`/markets?slug=${s}`);
+  if (d && d.length > 0) {
+    const m = d[0];
+    return { slug: m.slug, title: m.question, markets: [m],
+      volume: m.volume, volume24hr: m.volume24hr, liquidity: m.liquidity,
+      endDate: m.endDate, closed: m.closed, active: m.active };
+  }
+  return null;
+}
+
+// ── Extract CLOB token IDs from Gamma market (for live prices like Polyism) ─
+function extractClobTokenInfo(ev) {
+  const m = ev.markets?.[0];
+  if (!m) return null;
+  try {
+    const raw = m.clobTokenIds ?? m.clob_token_ids;
+    const tokenIds = typeof raw === 'string' ? JSON.parse(raw || '[]') : (Array.isArray(raw) ? raw : []);
+    const outcomes = typeof m.outcomes === 'string' ? JSON.parse(m.outcomes || '[]') : (Array.isArray(m.outcomes) ? m.outcomes : []);
+    if (tokenIds.length >= 2 && outcomes.length >= 2) {
+      const isUpFirst = (outcomes[0] || '').toLowerCase().includes('up');
+      return { tokenIds, isUpFirst };
+    }
+  } catch {}
+  return null;
+}
+
+// ── Parse odds from Gamma (fallback when CLOB not used) ─────────────────────
+function parseOdds(ev) {
+  const m = ev.markets?.[0];
+  if (!m) return { up: 50, down: 50 };
+  try {
+    const p = JSON.parse(m.outcomePrices || '[]');
+    const o = JSON.parse(m.outcomes || '[]');
+    if (p.length >= 2 && o.length >= 2) {
+      const p0 = parseFloat(p[0]), p1 = parseFloat(p[1]);
+      const isUp0 = (o[0] || '').toLowerCase().includes('up');
+      return isUp0
+        ? { up: Math.round(p0 * 100), down: Math.round(p1 * 100) }
+        : { up: Math.round(p1 * 100), down: Math.round(p0 * 100) };
+    }
+  } catch {}
+  return { up: 50, down: 50 };
+}
+
+function formatUSD(n) {
+  n = parseFloat(n) || 0;
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+  return n > 0 ? '$' + n.toFixed(0) : '—';
+}
+
+// ── Find active market ──────────────────────────
+async function findActive() {
+  const b = getBucket();
+  const now = Date.now() / 1000;
+  log(`Bucket: ${b} (${new Date(b * 1000).toISOString().substr(11,5)} UTC)`);
+
+  // Try current, next, then previous buckets
+  for (const ts of [b, b + INTERVAL, b - INTERVAL, b + 2*INTERVAL]) {
+    const s = slug(ts);
+    log(`→ ${s}`);
+    const ev = await fetchEvent(s);
+    if (ev) {
+      const endTs = ts + INTERVAL;
+      if (endTs > now) {
+        log(`✓ Active: ${s}`);
+        return { event: ev, slug: s, startTs: ts, endTs };
+      }
+      log(`  (ended)`);
+    }
+  }
+  return null;
+}
+
+// ── Fetch recent closed markets ─────────────────
+async function fetchHistory() {
+  const b = getBucket();
+  const results = [];
+  // Fetch in parallel for speed — last 6 markets
+  const promises = [];
+  for (let i = 1; i <= 6; i++) {
+    const ts = b - i * INTERVAL;
+    promises.push(fetchEvent(slug(ts)).then(ev => ev ? { event: ev, startTs: ts } : null));
+  }
+  const settled = await Promise.all(promises);
+  return settled.filter(Boolean);
+}
+
+// ── Render ──────────────────────────────────────
+function render(act, hist) {
+  const odds = parseOdds(act.event);
+  const m = act.event.markets?.[0];
+  const vol24h = m?.volume24hr || act.event.volume24hr || 0;
+  const liq = m?.liquidityNum || m?.liquidity || act.event.liquidity || 0;
+  const vol = m?.volumeNum || m?.volume || act.event.volume || 0;
+  const pmLink = `https://polymarket.com/event/${act.slug}`;
+
+  let html = `
+    <div class="market-question">Current Market</div>
+    <div class="market-title">
+      <a href="${pmLink}" target="_blank">Bitcoin Up or Down — ${etRange(act.startTs)}</a>
+    </div>
+    <a class="pm-link" href="${pmLink}" target="_blank">View on Polymarket ↗</a>
+
+    <div class="countdown-bar">
+      <div class="countdown-top">
+        <div class="countdown-label">Resolves in</div>
+        <div class="countdown-time" id="cd">--:--</div>
+      </div>
+      <div class="countdown-progress"><div class="countdown-fill" id="cdFill"></div></div>
+    </div>
+
+    <div class="odds-container">
+      <div class="odds-card up">
+        <div class="odds-label">↑ Up</div>
+        <div class="odds-pct" id="upPct">${odds.up}%</div>
+        <div class="odds-cents" id="upCents">${odds.up}¢ / share</div>
+      </div>
+      <div class="odds-card down">
+        <div class="odds-label">↓ Down</div>
+        <div class="odds-pct" id="downPct">${odds.down}%</div>
+        <div class="odds-cents" id="downCents">${odds.down}¢ / share</div>
+      </div>
+    </div>
+
+    <div class="split-bar">
+      <div class="split-up" id="splitUp" style="width:${odds.up}%"></div>
+      <div class="split-down" id="splitDown" style="width:${odds.down}%"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-label">24h Volume</div><div class="stat-value">${formatUSD(vol24h)}</div></div>
+      <div class="stat-item"><div class="stat-label">Liquidity</div><div class="stat-value">${formatUSD(liq)}</div></div>
+      <div class="stat-item"><div class="stat-label">Total Volume</div><div class="stat-value">${formatUSD(vol)}</div></div>
+    </div>
+
+    <div class="trade-panel" id="tradePanel">
+      <h3>Trade (MetaMask)</h3>
+      <div class="trade-form">
+        <div class="trade-field">
+          <label>Outcome</label>
+          <select id="tradeSide">
+            <option value="up">↑ Up</option>
+            <option value="down">↓ Down</option>
+          </select>
+        </div>
+        <div class="trade-field">
+          <label>Price (¢)</label>
+          <input type="number" id="tradePrice" min="1" max="99" step="1" placeholder="50" />
+        </div>
+        <div class="trade-field">
+          <label>Size (shares)</label>
+          <input type="number" id="tradeSize" min="1" step="0.01" value="${_savedTradeSize || '10'}" />
+        </div>
+        <button type="button" class="btn-trade" id="btnPlaceOrder">Place order</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 0 0;">
+        <label class="label-99" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+          <input type="checkbox" id="autoSizeCheck" ${autoSizeEnabled ? 'checked' : ''} />
+          <span>Auto-size</span>
+        </label>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="autoSizePctInput" min="1" max="100" step="1" value="${autoSizePct}" style="width:55px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;text-align:center;" />
+          <span style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;">% of balance</span>
+        </div>
+        <span id="autoSizeInfo" style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;"></span>
+      </div>
+      <div class="buy-99-row">
+        <label class="label-99" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="autoBuy99Check" checked />
+          <span id="autoBuyLabel">Auto-buy — first price hit wins (ladder)</span>
+        </label>
+        <p style="font-size:10px;color:var(--text-dim);margin:4px 0 0 0;">When price is within 2¢ of target, we poll faster so the order (and one MetaMask sign) is requested as soon as it hits.</p>
+        <label class="label-99" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:6px 0;">
+          <input type="checkbox" id="preSignCheck" ${preSignEnabled ? 'checked' : ''} />
+          <span>Pre-sign orders (instant execution, no MetaMask popup at trigger)</span>
+        </label>
+        <div id="preSignStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin:2px 0 6px 0;"></div>
+        <!-- ── Buy Price Ladder (first hit wins) ── -->
+        <div style="margin:8px 0 4px 0;">
+          <div style="display:grid;grid-template-columns:20px 52px 1fr 28px;gap:6px;align-items:center;margin-bottom:5px;padding:0 2px;">
+            <span></span>
+            <span style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;text-align:center;">Level</span>
+            <span style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;text-align:center;">Trigger Price (¢)</span>
+            <span></span>
+          </div>
+          ${[0,1,2,3,4].map(function(i){
+            var l = buyLadder[i];
+            var inp = 'background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:\'JetBrains Mono\',monospace;font-size:13px;text-align:center;width:100%;';
+            var dis = l.enabled ? '' : 'disabled style=\"opacity:0.38;\"';
+            return '<div style=\"display:grid;grid-template-columns:20px 52px 1fr 28px;gap:6px;align-items:center;margin-bottom:5px;\">'
+              + '<input type=\"checkbox\" id=\"ladderEn'+i+'\" '+(l.enabled?'checked':'')+' style=\"margin:0;cursor:pointer;\" />'
+              + '<span style=\"font-size:11px;color:var(--text-dim);font-family:\'JetBrains Mono\',monospace;text-align:center;\">L'+(i+1)+'</span>'
+              + '<input type=\"number\" id=\"ladderPrice'+i+'\" min=\"1\" max=\"99\" step=\"1\" value=\"'+l.price+'\" '+dis+' style=\"'+inp+'\" />'
+              + '<span id=\"ladderStatus'+i+'\" title=\"Level '+(i+1)+'\">'+(!l.enabled ? '⬜' : '🟡')+'</span>'
+              + '</div>';
+          }).join('')}
+          <div id="ladderSummary" style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:4px;"></div>
+        </div>
+        <div class="buy-99-btns">
+          <button type="button" class="btn-99" id="btnBuy99">Buy now</button>
+        </div>
+        <label class="label-99" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;">
+          <input type="checkbox" id="autoClaimCheck" />
+          <span>Auto-claim winnings after market settles</span>
+        </label>
+        <div class="auto-sell-section">
+          <label class="label-99" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="autoSellCheck" ${autoSellEnabled ? "checked" : ""} />
+            <span>Auto-sell after buy fills</span>
+          </label>
+          <p style="font-size:10px;color:var(--text-dim);margin:4px 0 6px 0;">When a buy order fills, automatically place a sell order at the price below.</p>
+          <div class="label-99" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span>Auto-sell at</span>
+            <input type="range" id="autoSellPriceSlider" min="1" max="99" value="${_savedAutoSellPrice || '95'}" style="width:120px;vertical-align:middle;" />
+            <span id="autoSellPriceValue">${_savedAutoSellPrice || '95'}</span><span>¢</span>
+          </div>
+          <div id="autoSellStatus" class="auto-sell-status"><span class="dot"></span>Inactive</div>
+          <button type="button" id="btnFixAllowances" onclick="fixAllowances()" style="margin-top:6px;padding:4px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;" title="Re-sync conditional token allowances with Polymarket server — fixes 'not enough allowance' errors">Fix allowances</button>
+        </div>
+      </div>
+      <div class="trade-msg" id="tradeMsg"></div>
+      <p style="font-size:11px;color:var(--text-dim);margin-top:12px;">Trades use <strong>USDCe</strong> on Polygon. Fund your proxy wallet with USDCe at polymarket.com.</p>
+    </div>
+
+    <div class="positions-panel" id="positionsPanel">
+      <h3>Open orders &amp; balance (USDCe)</h3>
+      <div id="positionsContent">
+        <p style="font-size:12px;color:var(--text-dim);">Connect MetaMask to see balance and open orders.</p>
+      </div>
+      <button type="button" class="btn-proxy" id="btnRefreshPositions" style="margin-top:10px;display:none;">Refresh</button>
+    </div>
+
+    <div class="edge-panel" id="edgePanel">
+      <h3>⚡ Edge Engine — Smart Trade Filter</h3>
+
+      <div class="pnl-row" id="pnlRow">
+        <span class="pnl-chip" id="pnlChip">P&amp;L: —</span>
+        <span class="pnl-chip" id="winRateChip">Win rate: —</span>
+        <span class="pnl-chip" id="tradesChip">Trades: 0</span>
+        <button type="button" class="btn-reset-pnl" id="btnResetPnl">Reset</button>
+      </div>
+
+      <div class="optimizer-panel" id="optimizerPanel" style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:600;color:var(--accent);font-family:'JetBrains Mono',monospace;">🤖 Auto-Optimizer</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);cursor:pointer;">
+            <input type="checkbox" id="optimizerEnabled" checked />
+            <span>Enabled</span>
+          </label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="background:var(--surface);border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">BUY PRICE</div>
+            <div id="optBuyPrice" style="font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;">—¢</div>
+            <div id="optBuyReason" style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px;">waiting for data</div>
+          </div>
+          <div style="background:var(--surface);border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">SELL PRICE</div>
+            <div id="optSellPrice" style="font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;">—¢</div>
+            <div id="optSellReason" style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px;">waiting for data</div>
+          </div>
+          <div style="background:var(--surface);border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">TRADE SIZE</div>
+            <div id="optSize" style="font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;">—</div>
+            <div id="optSizeReason" style="font-size:9px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px;">waiting for data</div>
+          </div>
+        </div>
+        <button type="button" id="btnApplyOpt" style="width:100%;padding:8px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;" disabled>
+          Apply suggested params
+        </button>
+        <div id="optStatus" style="font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:6px;text-align:center;">Need at least 3 completed trades to optimize</div>
+      </div>
+
+      <div class="edge-grid">
+        <div class="edge-stat">
+          <div class="edge-stat-label">Trend Bias</div>
+          <div class="edge-stat-value neutral" id="edgeTrend">—</div>
+        </div>
+        <div class="edge-stat">
+          <div class="edge-stat-label">Momentum / Accel</div>
+          <div class="edge-stat-value neutral" id="edgeMomentum">—</div>
+        </div>
+        <div class="edge-stat">
+          <div class="edge-stat-label">Time Remaining</div>
+          <div class="edge-stat-value neutral" id="edgeTimeOk">—</div>
+        </div>
+        <div class="edge-stat">
+          <div class="edge-stat-label">Volatility</div>
+          <div class="edge-stat-value neutral" id="edgeVol">—</div>
+        </div>
+        <div class="edge-stat">
+          <div class="edge-stat-label">Bid/Ask Spread</div>
+          <div class="edge-stat-value neutral" id="edgeSpread">—</div>
+        </div>
+        <div class="edge-stat">
+          <div class="edge-stat-label">Outcome Streak</div>
+          <div class="edge-stat-value neutral" id="edgeStreak">—</div>
+        </div>
+      </div>
+
+      <div class="signal-bar"><div class="signal-fill" id="edgeSignalFill" style="width:0%;background:var(--accent);"></div></div>
+      <div class="signal-label"><span>Edge Score</span><span id="edgeScoreLabel">0 / 100</span></div>
+
+      <div class="edge-recommendation neutral" id="edgeReco">Analyzing market conditions…</div>
+
+      <div class="edge-filters" style="margin-top:14px;">
+        <div class="edge-filter-row">
+          <input type="checkbox" id="filterTimeCheck" ${_edgeSettings.filterTimeCheck ? 'checked' : ''} />
+          <span>Block buys if &lt;</span>
+          <input type="range" id="filterTimeSec" min="10" max="240" step="5" value="${_edgeSettings.filterTimeSec}" />
+          <span class="val" id="filterTimeVal">${_edgeSettings.filterTimeSec}</span><span>s remaining</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="filterTrendCheck" ${_edgeSettings.filterTrendCheck ? 'checked' : ''} />
+          <span>Only buy trending side (recent history bias)</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="filterVolCheck" ${_edgeSettings.filterVolCheck ? 'checked' : ''} />
+          <span>Block if price moved &gt;</span>
+          <input type="range" id="filterVolPct" min="5" max="40" step="1" value="${_edgeSettings.filterVolPct}" />
+          <span class="val" id="filterVolVal">${_edgeSettings.filterVolPct}</span><span>¢ in last 30s (too volatile)</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="filterMomCheck" ${_edgeSettings.filterMomCheck ? 'checked' : ''} />
+          <span>Require momentum: price rising &gt;</span>
+          <input type="range" id="filterMomPct" min="1" max="15" step="1" value="${_edgeSettings.filterMomPct}" />
+          <span class="val" id="filterMomVal">${_edgeSettings.filterMomPct}</span><span>¢ in last 10s</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="edgeGateCheck" ${_edgeSettings.edgeGateCheck ? 'checked' : ''} />
+          <span>Gate auto-buy: require edge score ≥</span>
+          <input type="range" id="edgeGateThresh" min="10" max="90" step="5" value="${_edgeSettings.edgeGateThresh}" />
+          <span class="val" id="edgeGateVal">${_edgeSettings.edgeGateThresh}</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="stopLossCheck" ${_edgeSettings.stopLossCheck ? 'checked' : ''} />
+          <span>Auto-cancel buy if price reverses &gt;</span>
+          <input type="range" id="stopLossPct" min="2" max="20" step="1" value="${_edgeSettings.stopLossPct}" />
+          <span class="val" id="stopLossVal">${_edgeSettings.stopLossPct}</span><span>¢ after order placed</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="filterSpreadCheck" ${_edgeSettings.filterSpreadCheck ? 'checked' : ''} />
+          <span>Block if bid/ask spread &gt;</span>
+          <input type="range" id="filterSpreadMax" min="1" max="15" step="1" value="${_edgeSettings.filterSpreadMax}" />
+          <span class="val" id="filterSpreadVal">${_edgeSettings.filterSpreadMax}</span><span>¢ (wide spread = uncertain market)</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="filterStreakCheck" ${_edgeSettings.filterStreakCheck ? 'checked' : ''} />
+          <span>Boost score if recent markets show streak ≥</span>
+          <input type="range" id="filterStreakMin" min="2" max="5" step="1" value="${_edgeSettings.filterStreakMin}" />
+          <span class="val" id="filterStreakVal">${_edgeSettings.filterStreakMin}</span><span>in a row (awareness only)</span>
+        </div>
+        <div class="edge-filter-row">
+          <input type="checkbox" id="warmupCheck" ${_edgeSettings.warmupCheck ? 'checked' : ''} />
+          <span>Wait</span>
+          <input type="range" id="warmupSec" min="30" max="270" step="15" value="${_edgeSettings.warmupSec}" />
+          <span class="val" id="warmupSecVal">${Math.floor(parseInt(_edgeSettings.warmupSec)/60)}:${String(parseInt(_edgeSettings.warmupSec)%60).padStart(2,'0')}</span>
+          <span>into market before any auto-buy</span>
+        </div>
+      </div>
+    </div>`;
+
+  if (hist.length > 0) {
+    html += `<div class="section-title">Recent Markets</div><div class="history-list">`;
+    for (const h of hist) {
+      const ho = parseOdds(h.event);
+      const closed = h.event.closed;
+      let badge = '<span class="history-result result-pending">Active</span>';
+      if (closed) {
+        const hm = h.event.markets?.[0];
+        if (hm) {
+          try {
+            const hp = JSON.parse(hm.outcomePrices || '[]');
+            const ho2 = JSON.parse(hm.outcomes || '[]');
+            const isUp0 = (ho2[0]||'').toLowerCase().includes('up');
+            const upPrice = isUp0 ? parseFloat(hp[0]) : parseFloat(hp[1]);
+            badge = upPrice > 0.9
+              ? '<span class="history-result result-up">↑ Up</span>'
+              : '<span class="history-result result-down">↓ Down</span>';
+          } catch { badge = '<span class="history-result result-pending">Closed</span>'; }
+        }
+      }
+      html += `<div class="history-item">
+        <span class="history-time">${etTime(h.startTs)}</span>
+        <div class="history-odds"><span class="history-up">↑${ho.up}%</span><span class="history-down">↓${ho.down}%</span></div>
+        ${badge}
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('content').innerHTML = html;
+  lastRenderedEvent = act.event;
+  startTimer(act.startTs, act.endTs);
+  setupTradePanel(odds);
+  setupEdgeEngine();
+}
+
+// ── Countdown timer ─────────────────────────────
+function startTimer(startTs, endTs) {
+  if (timerInterval) clearInterval(timerInterval);
+  function tick() {
+    const now = Date.now() / 1000;
+    const rem = Math.max(0, endTs - now);
+    const pct = Math.min(100, ((now - startTs) / (endTs - startTs)) * 100);
+    const mm = Math.floor(rem / 60), ss = Math.floor(rem % 60);
+    const el = document.getElementById('cd');
+    const fill = document.getElementById('cdFill');
+    if (el) el.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    if (fill) fill.style.width = pct + '%';
+    if (rem <= 0) {
+      clearInterval(timerInterval);
+      log('Market ended → refreshing in 5s');
+      fetchEvent(currentSlug).then(function (ev) { if (ev) lastRenderedEvent = ev; });
+      setTimeout(load, 5000);
+    }
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+// ── Refresh odds (live from CLOB when available, like Polyism) ──────────────
+async function refreshOdds() {
+  if (!currentSlug) return;
+
+  if (clobTokenInfo) {
+    const body = [
+      { token_id: clobTokenInfo.tokenIds[0], side: 'BUY' },
+      { token_id: clobTokenInfo.tokenIds[1], side: 'BUY' },
+      { token_id: clobTokenInfo.tokenIds[0], side: 'SELL' },
+      { token_id: clobTokenInfo.tokenIds[1], side: 'SELL' },
+    ];
+    const prices = await clobFetch('/prices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (prices && typeof prices === 'object') {
+      const p0buy  = parseFloat(prices[clobTokenInfo.tokenIds[0]]?.BUY  ?? 0.5);
+      const p1buy  = parseFloat(prices[clobTokenInfo.tokenIds[1]]?.BUY  ?? 0.5);
+      const p0sell = parseFloat(prices[clobTokenInfo.tokenIds[0]]?.SELL ?? p0buy);
+      const p1sell = parseFloat(prices[clobTokenInfo.tokenIds[1]]?.SELL ?? p1buy);
+      const upCents   = clobTokenInfo.isUpFirst ? Math.round(p0buy * 100) : Math.round(p1buy * 100);
+      const downCents = clobTokenInfo.isUpFirst ? Math.round(p1buy * 100) : Math.round(p0buy * 100);
+      // Spread of the high-side token (tighter = more confident market)
+      const highBuy  = Math.max(p0buy,  p1buy);
+      const highSell = clobTokenInfo.isUpFirst === (p0buy >= p1buy) ? p0sell : p1sell;
+      const spreadCents = Math.round(Math.abs(highBuy - highSell) * 100);
+      const up = document.getElementById('upPct');
+      const dn = document.getElementById('downPct');
+      const upC = document.getElementById('upCents');
+      const dnC = document.getElementById('downCents');
+      const splitUp = document.getElementById('splitUp');
+      const splitDown = document.getElementById('splitDown');
+      if (up) up.textContent = upCents + '%';
+      if (dn) dn.textContent = downCents + '%';
+      if (upC) upC.textContent = upCents + '¢ / share';
+      if (dnC) dnC.textContent = downCents + '¢ / share';
+      if (splitUp) splitUp.style.width = upCents + '%';
+      if (splitDown) splitDown.style.width = downCents + '%';
+      document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      updateBuy99Highlight();
+      updateEdgeEngine(upCents, downCents, spreadCents);
+      tryAutoBuy99(upCents, downCents);
+      var target = getAutoBuyPriceCents(); // lowest enabled ladder level
+      // Fast-poll triggers 2¢ below the lowest enabled level that hasn't fired
+      var nearTarget = (function() {
+        var levels = getEnabledLevels();
+        for (var ni = 0; ni < levels.length; ni++) {
+          if (!autoBuy99Done.up && upCents   >= levels[ni].price - NEAR_TARGET_CENTS) return true;
+          if (!autoBuy99Done.down && downCents >= levels[ni].price - NEAR_TARGET_CENTS) return true;
+        }
+        return false;
+      })();
+      var stillWaiting = !autoBuy99Done.up || !autoBuy99Done.down; // either side still unfired
+      var autoBuyEl = document.getElementById('autoBuy99Check');
+      if (autoBuyEl && autoBuyEl.checked && nearTarget && stillWaiting && tradingClient) {
+        if (!fastPollInterval) fastPollInterval = setInterval(refreshOdds, FAST_POLL_MS);
+      } else {
+        if (fastPollInterval) { clearInterval(fastPollInterval); fastPollInterval = null; }
+      }
+      if (waitingFor99) {
+        var levels = getEnabledLevels();
+        for (var wli = 0; wli < levels.length; wli++) {
+          var wt = levels[wli].price;
+          if ((upCents >= wt && !autoBuy99Done.up) || (downCents >= wt && !autoBuy99Done.down)) {
+            waitingFor99 = false;
+            updateBuy99ButtonLabel();
+            lastFiredLevelPrice = wt;
+            var btn = document.getElementById('btnBuy99');
+            if (btn) btn.disabled = true;
+            if (upCents >= wt && !autoBuy99Done.up)     { autoBuy99Done.up   = true; await placeOrderAtPrice('up',   wt, false); }
+            if (downCents >= wt && !autoBuy99Done.down) { autoBuy99Done.down = true; await placeOrderAtPrice('down', wt, false); }
+            updateLadderStatusIcons();
+            if (btn) btn.disabled = false;
+            break; // first hit wins
+          }
+        }
+      }
+      if (lastRenderedEvent && lastRenderedEvent.closed && claimAttemptedForSlug !== currentSlug) {
+        var autoClaimEl = document.getElementById('autoClaimCheck');
+        if (autoClaimEl && autoClaimEl.checked) {
+          claimAttemptedForSlug = currentSlug;
+          tryClaimWinnings(lastRenderedEvent);
+        }
+      }
+      return;
+    }
+  }
+
+  const ev = await fetchEvent(currentSlug);
+  if (!ev) return;
+  const o = parseOdds(ev);
+  const up = document.getElementById('upPct');
+  const dn = document.getElementById('downPct');
+  const upC = document.getElementById('upCents');
+  const dnC = document.getElementById('downCents');
+  const splitUp = document.getElementById('splitUp');
+  const splitDown = document.getElementById('splitDown');
+  if (up) up.textContent = o.up + '%';
+  if (dn) dn.textContent = o.down + '%';
+  if (upC) upC.textContent = o.up + '¢ / share';
+  if (dnC) dnC.textContent = o.down + '¢ / share';
+  if (splitUp) splitUp.style.width = o.up + '%';
+  if (splitDown) splitDown.style.width = o.down + '%';
+  document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  updateBuy99Highlight();
+  updateEdgeEngine(o.up, o.down, null);
+  tryAutoBuy99(o.up, o.down);
+  if (ev.closed && claimAttemptedForSlug !== currentSlug) {
+    var autoClaimEl = document.getElementById('autoClaimCheck');
+    if (autoClaimEl && autoClaimEl.checked) {
+      claimAttemptedForSlug = currentSlug;
+      tryClaimWinnings(ev);
+    }
+  }
+}
+
+// ── Trading (MetaMask + Polymarket CLOB) ────────────────────────────────────
+function setTradeMsg(msg, isError) {
+  const text = msg || '';
+  const cls = 'trade-msg' + (isError ? ' error' : (text ? ' success' : ''));
+  const el = document.getElementById('tradeMsg');
+  if (el) { el.textContent = text; el.className = cls; }
+  const status = document.getElementById('connectStatus');
+  if (status) { status.textContent = text; status.className = cls; status.style.visibility = text ? 'visible' : 'hidden'; }
+}
+
+function orderErrorMsg(e) {
+  var err = (e && e.response && e.response.data && e.response.data.error) || (e && e.message) || String(e);
+  if (/not enough balance|allowance/i.test(err)) {
+    return 'Not enough USDCe balance or allowance. Fund your proxy with USDCe on Polygon and set allowances at polymarket.com (e.g. deposit or place one trade there first).';
+  }
+  return err;
+}
+
+function getEthereumProvider() {
+  const e = typeof window !== 'undefined' ? window.ethereum : undefined;
+  if (!e) return null;
+  if (e.providers && Array.isArray(e.providers)) {
+    const metaMask = e.providers.find(function (p) { return p.isMetaMask; });
+    return metaMask || e.providers[0] || e;
+  }
+  return e;
+}
+
+// ── CTF Conditional Token Approvals (needed for selling) ──
+const CTF_ADDRESS = '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045';
+const CTF_EXCHANGE = '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E';
+const NEG_RISK_CTF_EXCHANGE = '0xC5d563A36AE78145C45a50134d48A1215220f80a';
+const CTF_ABI_APPROVAL = [
+  'function isApprovedForAll(address owner, address operator) view returns (bool)',
+  'function setApprovalForAll(address operator, bool approved)'
+];
+
+// Note: ensureCTFApprovals is intentionally removed.
+// Polymarket proxy wallets have approvals set automatically when created via polymarket.com.
+// Calling setApprovalForAll from the EOA (not the proxy) has no effect and causes spurious
+// MetaMask prompts. The real fix for "not enough balance" on sells is signatureType=1.
+async function ensureCTFApprovals(signer, proxyAddress) {
+  console.log('[BTC5m] ensureCTFApprovals: skipped (proxy wallet — approvals pre-set by Polymarket)');
+}
+
+async function connectMetaMask() {
+  const btn = document.getElementById('btnConnect');
+  const proxyFallback = document.getElementById('proxyFallback');
+  const proxyInput = document.getElementById('proxyInput');
+  if (!btn) return;
+  if (typeof ethers === 'undefined') {
+    setTradeMsg('Ethers library failed to load. Check the console or try refreshing.', true);
+    return;
+  }
+  btn.disabled = true;
+  setTradeMsg('Connecting...', false);
+  if (proxyFallback) proxyFallback.style.display = 'none';
+  pendingCreds = null;
+  let eth = getEthereumProvider();
+  if (!eth) {
+    setTradeMsg('Looking for MetaMask…', false);
+    await new Promise(function (r) { setTimeout(r, 1500); });
+    eth = getEthereumProvider();
+  }
+  if (!eth) {
+    var openVia = (typeof location !== 'undefined' && location.protocol === 'file:')
+      ? ' Open this page via http:// or https:// (file:// blocks extensions).'
+      : '';
+    setTradeMsg('MetaMask not detected. Install the MetaMask extension, unlock it, then refresh.' + openVia, true);
+    btn.disabled = false;
+    btn.textContent = 'Connect MetaMask';
+    return;
+  }
+  btn.textContent = 'Connecting...';
+  try {
+    const provider = new ethers.providers.Web3Provider(eth);
+    await provider.send('eth_requestAccounts', []);
+    const signer = provider.getSigner();
+    walletAddress = await signer.getAddress();
+    document.getElementById('walletAddr').textContent = walletAddress.slice(0, 6) + '…' + walletAddress.slice(-4);
+    document.getElementById('walletAddr').style.display = 'block';
+    const { ClobClient } = await import('https://esm.sh/@polymarket/clob-client');
+    const tempClient = new ClobClient(CLOB, 137, signer);
+    var creds = await tempClient.createOrDeriveApiKey();
+    if (creds && creds.apiKey && !creds.key) creds = { key: creds.apiKey, secret: creds.secret, passphrase: creds.passphrase };
+    const profile = await gfetch('/public-profile?address=' + encodeURIComponent(walletAddress));
+    const funder = (profile && profile.proxyWallet) ? profile.proxyWallet.trim() : null;
+    if (funder) {
+      tradingClient = new ClobClient(CLOB, 137, signer, creds, 1, funder);
+      btn.textContent = 'Connected';
+      setTradeMsg('Wallet connected. Checking token approvals…');
+      // Ensure CTF conditional token approvals are set for selling
+      await ensureCTFApprovals(signer, funder).catch(function(e) {
+        console.log('[BTC5m] CTF approval check/set note:', e.message || e);
+      });
+      setTradeMsg('Wallet connected (Polymarket proxy found). You can place orders.');
+      if (positionsRefreshInterval) clearInterval(positionsRefreshInterval);
+      loadOpenOrdersAndBalance();
+      positionsRefreshInterval = setInterval(loadOpenOrdersAndBalance, 30000);
+    } else {
+      pendingCreds = creds;
+      btn.textContent = 'Connected';
+      setTradeMsg('No proxy found for this wallet. Paste your proxy address from polymarket.com/settings and click Use proxy.');
+      if (proxyFallback) proxyFallback.style.display = 'flex';
+      if (proxyInput) proxyInput.value = '';
+    }
+  } catch (e) {
+    console.error('[BTC5m] Connect error:', e);
+    const msg = (e && e.message) ? e.message : String(e);
+    setTradeMsg(msg + (msg.includes('import') || msg.includes('module') ? ' Try trading on Polymarket directly via the link above.' : ''), true);
+    btn.disabled = false;
+    btn.textContent = 'Connect MetaMask';
+  }
+}
+
+async function useProxyAddress() {
+  const proxyInput = document.getElementById('proxyInput');
+  const proxyFallback = document.getElementById('proxyFallback');
+  const raw = proxyInput && proxyInput.value ? proxyInput.value.trim() : '';
+  if (!raw) {
+    setTradeMsg('Paste your proxy address from polymarket.com/settings.', true);
+    return;
+  }
+  if (!ethers.utils.isAddress(raw)) {
+    setTradeMsg('Invalid Ethereum address.', true);
+    return;
+  }
+  if (!window.ethereum || !pendingCreds) {
+    setTradeMsg('Connect MetaMask first, then paste proxy.', true);
+    return;
+  }
+  setTradeMsg('Connecting with proxy...', false);
+  try {
+    const eth = getEthereumProvider();
+    if (!eth) { setTradeMsg('MetaMask not detected. Refresh and connect again.', true); return; }
+    const provider = new ethers.providers.Web3Provider(eth);
+    const signer = provider.getSigner();
+    var creds = pendingCreds;
+    if (creds && creds.apiKey && !creds.key) creds = { key: creds.apiKey, secret: creds.secret, passphrase: creds.passphrase };
+    const { ClobClient } = await import('https://esm.sh/@polymarket/clob-client');
+    tradingClient = new ClobClient(CLOB, 137, signer, creds, 1, raw);
+    pendingCreds = null;
+    if (proxyFallback) proxyFallback.style.display = 'none';
+    setTradeMsg('Checking token approvals…');
+    await ensureCTFApprovals(signer, raw).catch(function(e) {
+      console.log('[BTC5m] CTF approval check/set note:', e.message || e);
+    });
+    setTradeMsg('Connected with proxy. You can place orders.');
+    if (positionsRefreshInterval) clearInterval(positionsRefreshInterval);
+    loadOpenOrdersAndBalance();
+    positionsRefreshInterval = setInterval(loadOpenOrdersAndBalance, 30000);
+  } catch (e) {
+    setTradeMsg(e.message || 'Failed to use proxy', true);
+  }
+}
+
+function setupTradePanel(odds) {
+  const priceEl = document.getElementById('tradePrice');
+  const sideEl = document.getElementById('tradeSide');
+  const sizeEl = document.getElementById('tradeSize');
+  const btnOrder = document.getElementById('btnPlaceOrder');
+  if (!priceEl || !sideEl || !btnOrder) return;
+  if (!priceEl.value || priceEl.value === '') priceEl.value = String(odds.up);
+  sideEl.addEventListener('change', function () {
+    const upEl = document.getElementById('upPct');
+    const dnEl = document.getElementById('downPct');
+    const pct = this.value === 'up' ? (upEl ? parseInt(upEl.textContent, 10) : 50) : (dnEl ? parseInt(dnEl.textContent, 10) : 50);
+    if (!isNaN(pct)) priceEl.value = String(pct);
+  });
+  btnOrder.addEventListener('click', placeOrder);
+  const btn99 = document.getElementById('btnBuy99');
+  if (btn99) btn99.addEventListener('click', buyAt99);
+  // ── Wire buy price ladder rows ──────────────────────────────────────────────
+  (function() {
+    function wireLadderRow(i) {
+      var enCb    = document.getElementById('ladderEn' + i);
+      var priceIn = document.getElementById('ladderPrice' + i);
+      if (!enCb) return;
+
+      function onEnableChange() {
+        buyLadder[i].enabled = enCb.checked;
+        if (priceIn) priceIn.disabled = !enCb.checked;
+        var statusEl = document.getElementById('ladderStatus' + i);
+        if (statusEl) statusEl.textContent = enCb.checked ? '🟡' : '⬜';
+        saveBuyLadder();
+        updateAutoBuyPriceDisplay();
+        invalidatePreSigned(); // any ladder change re-requires signing
+      }
+      function onPriceChange() {
+        var v = Math.max(1, Math.min(99, parseInt(priceIn.value, 10) || buyLadder[i].price));
+        priceIn.value = v;
+        buyLadder[i].price = v;
+        saveBuyLadder();
+        updateAutoBuyPriceDisplay();
+        invalidatePreSigned();
+      }
+
+      enCb.addEventListener('change', onEnableChange);
+      if (priceIn) {
+        priceIn.addEventListener('change', onPriceChange);
+        priceIn.addEventListener('blur',   onPriceChange);
+      }
+    }
+    for (var ri = 0; ri < 5; ri++) wireLadderRow(ri);
+  })();
+  if (sizeEl) {
+    if (_savedTradeSize !== null) { sizeEl.value = _savedTradeSize; }
+    sizeEl.addEventListener('input', function() { _savedTradeSize = sizeEl.value; try { localStorage.setItem('tradeSize', sizeEl.value); } catch(e) {} });
+    sizeEl.addEventListener('change', function() { _savedTradeSize = sizeEl.value; try { localStorage.setItem('tradeSize', sizeEl.value); } catch(e) {} });
+  }
+  updateAutoBuyPriceDisplay();
+  updateLadderStatusIcons();
+  // Auto-size wiring
+  var autoSizeCb = document.getElementById('autoSizeCheck');
+  var autoSizePctEl = document.getElementById('autoSizePctInput');
+  if (autoSizeCb) {
+    autoSizeCb.addEventListener('change', function() {
+      autoSizeEnabled = autoSizeCb.checked;
+      try { localStorage.setItem('autoSizeEnabled', autoSizeCb.checked); } catch(e) {}
+      updateAutoSize();
+    });
+  }
+  if (autoSizePctEl) {
+    autoSizePctEl.addEventListener('input', function() {
+      autoSizePct = parseFloat(autoSizePctEl.value) || 10;
+      try { localStorage.setItem('autoSizePct', autoSizePctEl.value); } catch(e) {}
+      updateAutoSize();
+    });
+    autoSizePctEl.addEventListener('change', function() {
+      autoSizePct = parseFloat(autoSizePctEl.value) || 10;
+      try { localStorage.setItem('autoSizePct', autoSizePctEl.value); } catch(e) {}
+      updateAutoSize();
+    });
+  }
+  updateAutoSize();
+  var btnRefreshPos = document.getElementById('btnRefreshPositions');
+  if (btnRefreshPos) btnRefreshPos.addEventListener('click', loadOpenOrdersAndBalance);
+  if (tradingClient) loadOpenOrdersAndBalance();
+  updateBuy99Highlight();
+
+  // Auto-sell UI wiring
+  var sellSlider = document.getElementById('autoSellPriceSlider');
+  if (sellSlider) {
+    if (_savedAutoSellPrice !== null) { sellSlider.value = _savedAutoSellPrice; }
+    sellSlider.addEventListener('input', function() {
+      _savedAutoSellPrice = sellSlider.value;
+      try { localStorage.setItem('autoSellPrice', sellSlider.value); } catch(e) {}
+      updateAutoSellPriceDisplay();
+      updateAutoSellStatus();
+      if (preSignedSellOrders.up || preSignedSellOrders.down) {
+        preSignedSellOrders = { up: null, down: null };
+        updatePreSignStatus();
+      }
+    });
+    sellSlider.addEventListener('change', function() {
+      _savedAutoSellPrice = sellSlider.value;
+      try { localStorage.setItem('autoSellPrice', sellSlider.value); } catch(e) {}
+      updateAutoSellPriceDisplay();
+      updateAutoSellStatus();
+      if (preSignedSellOrders.up || preSignedSellOrders.down) {
+        preSignedSellOrders = { up: null, down: null };
+        updatePreSignStatus();
+      }
+    });
+  }
+  updateAutoSellPriceDisplay();
+  var autoSellCheck = document.getElementById('autoSellCheck');
+  if (autoSellCheck) {
+    autoSellCheck.addEventListener('change', function() {
+      autoSellEnabled = autoSellCheck.checked; try { localStorage.setItem("autoSellEnabled", autoSellCheck.checked); } catch(e) {}
+      updateAutoSellStatus();
+    });
+  }
+  updateAutoSellStatus();
+
+  // Pre-sign wiring
+  var preSignCb = document.getElementById('preSignCheck');
+  if (preSignCb) {
+    preSignCb.addEventListener('change', function() {
+      preSignEnabled = preSignCb.checked;
+      try { localStorage.setItem('preSignEnabled', preSignCb.checked); } catch(e) {}
+      updatePreSignStatus();
+      if (preSignEnabled && tradingClient && clobTokenInfo && !preSignedOrders.up) {
+        preSignBuyOrders();
+      }
+    });
+  }
+  updatePreSignStatus();
+
+  // Auto pre-sign if enabled and wallet connected
+  if (preSignEnabled && tradingClient && clobTokenInfo && !preSignedOrders.up && !preSignInProgress) {
+    setTimeout(function() { preSignBuyOrders(); }, 500);
+  }
+}
+
+function getAutoBuyPriceCents() {
+  // Returns the lowest enabled ladder level — used for edge engine, optimizer, fast-poll
+  for (var i = 0; i < buyLadder.length; i++) {
+    if (buyLadder[i].enabled) return buyLadder[i].price;
+  }
+  return 85; // fallback
+}
+
+// Returns sorted list of enabled levels (lowest first)
+function getEnabledLevels() {
+  return buyLadder
+    .map(function(l,i){ return {price: l.price, idx: i}; })
+    .filter(function(l){ return buyLadder[l.idx].enabled; })
+    .sort(function(a,b){ return a.price - b.price; });
+}
+
+function updateBuy99Highlight() {
+  const upEl = document.getElementById('upPct');
+  const dnEl = document.getElementById('downPct');
+  const btn99 = document.getElementById('btnBuy99');
+  const upCents = upEl ? parseInt(upEl.textContent, 10) : NaN;
+  const dnCents = dnEl ? parseInt(dnEl.textContent, 10) : NaN;
+  const target = getAutoBuyPriceCents();
+  if (btn99) btn99.classList.toggle('at-99', upCents >= target || dnCents >= target);
+}
+
+function updateBuy99ButtonLabel() {
+  var btn = document.getElementById('btnBuy99');
+  if (!btn) return;
+  if (waitingFor99) {
+    btn.textContent = 'Waiting for ' + getAutoBuyPriceCents() + '¢… (click to cancel)';
+    return;
+  }
+  var levels = getEnabledLevels();
+  if (levels.length === 0) { btn.textContent = 'No levels enabled'; return; }
+  if (levels.length === 1) { btn.textContent = 'Buy at ' + levels[0].price + '¢ now'; return; }
+  btn.textContent = 'Buy at ' + levels[0].price + '¢ now (or ' + levels.slice(1).map(function(l){return l.price+'¢';}).join('/') + ' higher)';
+}
+
+function updateAutoBuyPriceDisplay() {
+  var levels = getEnabledLevels();
+  var labelEl = document.getElementById('autoBuyLabel');
+  if (labelEl) {
+    if (levels.length === 0) {
+      labelEl.textContent = 'Auto-buy — no levels enabled';
+    } else if (levels.length === 1) {
+      labelEl.textContent = 'Auto-buy when price hits ' + levels[0].price + '¢';
+    } else {
+      var prices = levels.map(function(l){ return l.price + '¢'; }).join(', ');
+      labelEl.textContent = 'Auto-buy ladder: ' + prices + ' (first hit wins)';
+    }
+  }
+  updateBuy99ButtonLabel();
+  updateLadderSummary();
+  if (autoSizeEnabled) updateAutoSize();
+  runParamOptimizer();
+  // If the lowest enabled price changed, invalidate pre-signed order
+  var lowestPrice = levels.length > 0 ? levels[0].price : null;
+  if (preSignedOrders.up && preSignedOrders.up.priceCents !== lowestPrice) {
+    invalidatePreSigned();
+  }
+}
+
+function updateLadderSummary() {
+  var el = document.getElementById('ladderSummary');
+  if (!el) return;
+  var levels = getEnabledLevels();
+  if (levels.length === 0) { el.textContent = 'No levels active'; return; }
+  el.textContent = levels.length + ' price' + (levels.length > 1 ? 's' : '')
+    + ' active: ' + levels.map(function(l){ return l.price + '¢'; }).join(' → ')
+    + ' — first hit triggers the buy, others cancel.';
+}
+
+function updateLadderStatusIcons() {
+  var fired = autoBuy99Done.up || autoBuy99Done.down;
+  for (var i = 0; i < 5; i++) {
+    var el = document.getElementById('ladderStatus' + i);
+    if (!el) continue;
+    if (!buyLadder[i].enabled) {
+      el.textContent = '⬜'; el.title = 'disabled';
+    } else if (fired) {
+      // One level fired — show which one was the winner vs which were skipped
+      var winPrice = lastFiredLevelPrice;
+      if (winPrice !== null && buyLadder[i].price === winPrice) {
+        el.textContent = '✅'; el.title = 'triggered at ' + winPrice + '¢';
+      } else if (winPrice !== null) {
+        el.textContent = '❌'; el.title = 'cancelled (another level fired first)';
+      } else {
+        el.textContent = '🟡'; el.title = 'waiting';
+      }
+    } else {
+      el.textContent = '🟡'; el.title = 'waiting';
+    }
+  }
+}
+
+var positionsRefreshInterval = null;
+
+async function loadOpenOrdersAndBalance() {
+  const content = document.getElementById('positionsContent');
+  const btnRefresh = document.getElementById('btnRefreshPositions');
+  if (!content) return;
+  if (!tradingClient) {
+    content.innerHTML = '<p style="font-size:12px;color:var(--text-dim);">Connect MetaMask to see balance and open orders.</p>';
+    if (btnRefresh) btnRefresh.style.display = 'none';
+    var balEl = document.getElementById('usdceBalance');
+    if (balEl) { balEl.style.display = 'none'; }
+    return;
+  }
+  if (btnRefresh) btnRefresh.style.display = 'inline-block';
+  content.innerHTML = '<p style="font-size:12px;color:var(--text-dim);">Loading…</p>';
+  try {
+    const [balanceRes, ordersRes] = await Promise.all([
+      tradingClient.getBalanceAllowance({ asset_type: 'COLLATERAL' }).catch(function () { return null; }),
+      tradingClient.getOpenOrders().catch(function () { return { data: [] }; })
+    ]);
+    let html = '';
+    var balNum = null;
+    if (balanceRes && (balanceRes.balance !== undefined || balanceRes.balanceAllowance !== undefined)) {
+      balNum = parseFloat(balanceRes.balance || balanceRes.balanceAllowance || 0);
+      if (balNum > 1000) balNum = balNum / 1e6;
+      lastKnownBalance = balNum;
+      html += '<div class="positions-balance"><strong>USDCe balance:</strong> $' + balNum.toFixed(2) + '</div>';
+    } else {
+      html += '<div class="positions-balance"><strong>USDCe</strong> balance: —</div>';
+    }
+    var balEl = document.getElementById('usdceBalance');
+    if (balEl) {
+      balEl.textContent = balNum !== null ? 'USDCe: $' + balNum.toFixed(2) : 'USDCe: —';
+      balEl.style.display = 'inline-block';
+    }
+    // Recalculate auto-size with fresh balance
+    if (autoSizeEnabled) updateAutoSize(); runParamOptimizer();
+    const orders = ordersRes && Array.isArray(ordersRes.data) ? ordersRes.data : (Array.isArray(ordersRes) ? ordersRes : []);
+    html += '<div class="label-99" style="margin-bottom:6px;">Open orders (' + orders.length + ')</div>';
+    if (orders.length === 0) {
+      html += '<p style="font-size:12px;color:var(--text-dim);">No open orders.</p>';
+    } else {
+      html += '<div class="open-orders-list">';
+      for (var i = 0; i < orders.length; i++) {
+        var o = orders[i];
+        var price = o.price !== undefined ? (typeof o.price === 'number' ? o.price : parseFloat(o.price)) : 0;
+        var size = o.size !== undefined ? (typeof o.size === 'number' ? o.size : parseFloat(o.size)) : 0;
+        var side = (o.side === 0 || (o.side && o.side.toString() === '0') || (o.side && o.side.toLowerCase() === 'buy')) ? 'BUY' : 'SELL';
+        var tokenId = o.tokenID || o.token_id || o.asset_id || '';
+        var isUp = clobTokenInfo && clobTokenInfo.tokenIds && (clobTokenInfo.tokenIds[0] === tokenId ? clobTokenInfo.isUpFirst : clobTokenInfo.tokenIds[1] === tokenId ? !clobTokenInfo.isUpFirst : null);
+        var sideLabel = isUp === true ? '↑ Up' : (isUp === false ? '↓ Down' : side);
+        var orderId = o.id || o.orderID || o.order_id || '';
+        html += '<div class="open-order-item">';
+        html += '<span class="' + (sideLabel.indexOf('Up') !== -1 ? 'side-up' : 'side-down') + '">' + side + ' ' + sideLabel + '</span>';
+        html += '<span>' + Math.round(price * 100) + '¢ × ' + size + '</span>';
+        html += '<span class="order-id" title="' + orderId + '">' + (orderId ? orderId.slice(0, 12) + '…' : '') + '</span>';
+        if (orderId) html += '<button type="button" class="btn-cancel" data-order-id="' + orderId + '">Cancel</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    content.innerHTML = html;
+    content.querySelectorAll('.btn-cancel').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-order-id');
+        if (id && tradingClient) cancelOrder(id);
+      });
+    });
+  } catch (e) {
+    console.error('[BTC5m] Positions load error:', e);
+    content.innerHTML = '<p style="font-size:12px;color:var(--red);">Failed to load: ' + (e.message || e) + '</p>';
+  }
+}
+
+async function cancelOrder(orderId) {
+  if (!tradingClient) return;
+  try {
+    await tradingClient.cancelOrder(orderId);
+    setTradeMsg('Order cancelled.');
+    loadOpenOrdersAndBalance();
+  } catch (e) {
+    setTradeMsg('Cancel failed: ' + (e.message || e), true);
+  }
+}
+
+// ── Auto-sell functions ──────────────────────────
+function getAutoSellPriceCents() {
+  var el = document.getElementById('autoSellPriceSlider');
+  if (!el) return 95;
+  var v = parseInt(el.value, 10);
+  return isNaN(v) || v < 1 || v > 99 ? 95 : v;
+}
+
+function updateAutoSellPriceDisplay() {
+  var v = getAutoSellPriceCents();
+  var valEl = document.getElementById('autoSellPriceValue');
+  if (valEl) valEl.textContent = String(v);
+}
+
+function updateAutoSellStatus() {
+  var el = document.getElementById('autoSellStatus');
+  if (!el) return;
+  var cb = document.getElementById('autoSellCheck');
+  autoSellEnabled = cb ? cb.checked : false;
+  if (!autoSellEnabled) {
+    el.className = 'auto-sell-status';
+    el.innerHTML = '<span class="dot"></span>Inactive';
+    stopAutoSellPoll();
+    return;
+  }
+  if (pendingBuyOrders.length > 0) {
+    el.className = 'auto-sell-status active';
+    el.innerHTML = '<span class="dot"></span>Watching ' + pendingBuyOrders.length + ' buy order(s) for fill → sell at ' + getAutoSellPriceCents() + '¢';
+    startAutoSellPoll();
+  } else {
+    el.className = 'auto-sell-status';
+    el.innerHTML = '<span class="dot"></span>Enabled — waiting for buy orders';
+  }
+}
+
+function trackBuyOrder(orderId, side, tokenId, size, priceCents) {
+  if (!orderId) return;
+  // Don't double-track
+  for (var i = 0; i < pendingBuyOrders.length; i++) {
+    if (pendingBuyOrders[i].orderId === orderId) return;
+  }
+  pendingBuyOrders.push({ orderId: orderId, side: side, tokenId: tokenId, size: size, priceCents: priceCents });
+  console.log('[BTC5m] Tracking buy order for auto-sell:', orderId, side, size);
+  updateAutoSellStatus();
+}
+
+function startAutoSellPoll() {
+  if (autoSellPollInterval) return;
+  autoSellPollInterval = setInterval(pollForBuyFills, FAST_POLL_MS);
+  console.log('[BTC5m] Auto-sell poll started');
+}
+
+function stopAutoSellPoll() {
+  if (autoSellPollInterval) {
+    clearInterval(autoSellPollInterval);
+    autoSellPollInterval = null;
+  }
+}
+
+async function pollForBuyFills() {
+  if (!tradingClient || pendingBuyOrders.length === 0 || !autoSellEnabled) {
+    stopAutoSellPoll();
+    return;
+  }
+  try {
+    var openOrders = await tradingClient.getOpenOrders().catch(function() { return { data: [] }; });
+    var openList = openOrders && Array.isArray(openOrders.data) ? openOrders.data : (Array.isArray(openOrders) ? openOrders : []);
+    var openIds = {};
+    for (var i = 0; i < openList.length; i++) {
+      var oid = openList[i].id || openList[i].orderID || openList[i].order_id || '';
+      if (oid) openIds[oid] = true;
+    }
+    var filled = [];
+    var stillPending = [];
+    for (var j = 0; j < pendingBuyOrders.length; j++) {
+      var po = pendingBuyOrders[j];
+      if (!openIds[po.orderId]) {
+        filled.push(po);
+      } else {
+        stillPending.push(po);
+      }
+    }
+    pendingBuyOrders = stillPending;
+    for (var k = 0; k < filled.length; k++) {
+      var fb = filled[k];
+      console.log('[BTC5m] Buy order no longer open → checking conditional balance before sell:', fb.orderId, fb.side);
+      // Check if we actually hold the conditional tokens before selling
+      var hasTokens = await checkConditionalBalance(fb.tokenId);
+      if (hasTokens) {
+        console.log('[BTC5m] ✓ Conditional tokens confirmed. Placing auto-sell.');
+        playAutoSellSound();
+        // Use the actual on-chain balance as sell size, not the requested order size.
+        // Partial fills or rounding can mean we hold slightly fewer tokens than ordered —
+        // selling more than we hold causes "not enough balance / allowance" errors.
+        var actualBal = await getConditionalBalance(fb.tokenId);
+        var sellAmt = actualBal > 0 ? Math.floor(actualBal * 100) / 100 : fb.size; // floor to 2dp
+        console.log('[BTC5m] Buy filled: tracked size=' + fb.size + ' actual balance=' + actualBal + ' selling=' + sellAmt);
+        await placeAutoSellOrder(fb.side, fb.tokenId, sellAmt);
+      } else {
+        console.log('[BTC5m] No conditional tokens yet. Re-queuing for next poll.');
+        // Put it back — tokens may still be settling on-chain
+        if (!fb._retries) fb._retries = 0;
+        fb._retries++;
+        if (fb._retries < 30) { // retry for ~10 seconds at 350ms
+          pendingBuyOrders.push(fb);
+        } else {
+          console.log('[BTC5m] Max retries reached. Buy may have been cancelled, not filled.');
+          setTradeMsg('Auto-sell: buy order disappeared but no tokens received. May have been cancelled.', true);
+        }
+      }
+    }
+    updateAutoSellStatus();
+    if (pendingBuyOrders.length === 0) stopAutoSellPoll();
+  } catch (e) {
+    console.error('[BTC5m] Auto-sell poll error:', e);
+  }
+}
+
+// Called by the "Fix allowances" button — refreshes all token allowances and reports result
+async function fixAllowances() {
+  var btn = document.getElementById('btnFixAllowances');
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+  setTradeMsg('Refreshing conditional token allowances…', false);
+  try {
+    if (!tradingClient) { setTradeMsg('Connect wallet first.', true); return; }
+    var tokenIds = (clobTokenInfo && clobTokenInfo.tokenIds) ? clobTokenInfo.tokenIds : [];
+    if (tokenIds.length === 0) { setTradeMsg('Load a market first.', true); return; }
+    for (var _fi = 0; _fi < tokenIds.length; _fi++) {
+      await tradingClient.updateBalanceAllowance({ asset_type: 'CONDITIONAL', token_id: tokenIds[_fi] });
+      console.log('[BTC5m] fixAllowances: refreshed', tokenIds[_fi].slice(0,12) + '...');
+    }
+    await new Promise(function(r){ setTimeout(r, 600); });
+    setTradeMsg('✓ Token allowances refreshed. Retry your sell.', false);
+  } catch (e) {
+    console.error('[BTC5m] fixAllowances error:', e);
+    setTradeMsg('Allowance refresh failed: ' + (e.message || e), true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Fix allowances'; }
+  }
+}
+
+async function getConditionalBalance(tokenId) {
+  try {
+    var bal = await tradingClient.getBalanceAllowance({
+      asset_type: 'CONDITIONAL',
+      token_id: tokenId
+    });
+    var raw = parseFloat(bal && (bal.balance !== undefined ? bal.balance : (bal.balanceAllowance !== undefined ? bal.balanceAllowance : 0)) || 0);
+    if (raw > 1e6) raw = raw / 1e6; // normalize micro-units
+    console.log('[BTC5m] Conditional balance for', tokenId.slice(0,12) + '...:', raw);
+    return raw;
+  } catch (e) {
+    console.error('[BTC5m] getConditionalBalance error:', e);
+    return 0;
+  }
+}
+
+async function checkConditionalBalance(tokenId) {
+  var bal = await getConditionalBalance(tokenId);
+  return bal > 0.5;
+}
+
+async function refreshConditionalAllowance(tokenId) {
+  // Refresh allowance for the specific token AND both market token IDs
+  var tokenIds = [tokenId];
+  if (clobTokenInfo && clobTokenInfo.tokenIds) {
+    for (var _ti = 0; _ti < clobTokenInfo.tokenIds.length; _ti++) {
+      var _t = clobTokenInfo.tokenIds[_ti];
+      if (_t && tokenIds.indexOf(_t) === -1) tokenIds.push(_t);
+    }
+  }
+  for (var _ri = 0; _ri < tokenIds.length; _ri++) {
+    try {
+      await tradingClient.updateBalanceAllowance({ asset_type: 'CONDITIONAL', token_id: tokenIds[_ri] });
+      console.log('[BTC5m] ✓ Conditional allowance refreshed for', tokenIds[_ri].slice(0,12) + '...');
+    } catch (e) {
+      console.log('[BTC5m] updateBalanceAllowance note:', e.message || e);
+    }
+  }
+  // Small delay so server-side allowance cache can propagate
+  await new Promise(function(r){ setTimeout(r, 400); });
+}
+
+// ── Auto-size: recalculate trade size from balance ──
+function updateAutoSize() {
+  var cb = document.getElementById('autoSizeCheck');
+  var pctInput = document.getElementById('autoSizePctInput');
+  var sizeEl = document.getElementById('tradeSize');
+  var infoEl = document.getElementById('autoSizeInfo');
+  autoSizeEnabled = cb ? cb.checked : false;
+  if (pctInput) autoSizePct = parseFloat(pctInput.value) || 10;
+
+  if (sizeEl) sizeEl.disabled = autoSizeEnabled;
+
+  if (!autoSizeEnabled || lastKnownBalance === null || lastKnownBalance <= 0) {
+    if (infoEl) infoEl.textContent = autoSizeEnabled ? '(waiting for balance…)' : '';
+    return;
+  }
+
+  var buyPrice = getAutoBuyPriceCents() / 100;
+  if (buyPrice <= 0) buyPrice = 0.89;
+  var dollarAmount = lastKnownBalance * (autoSizePct / 100);
+  var shares = Math.floor(dollarAmount / buyPrice * 100) / 100; // round down to 2 decimals
+  if (shares < 1) shares = 1;
+
+  if (sizeEl) {
+    sizeEl.value = shares.toFixed(2);
+    _savedTradeSize = sizeEl.value;
+    try { localStorage.setItem('tradeSize', sizeEl.value); } catch(e) {}
+  }
+  if (infoEl) {
+    infoEl.textContent = '($' + dollarAmount.toFixed(2) + ' → ' + shares.toFixed(2) + ' shares @ ' + getAutoBuyPriceCents() + '¢)';
+  }
+}
+
+// ── Pre-signed orders for instant execution ─────
+function updatePreSignStatus() {
+  var el = document.getElementById('preSignStatus');
+  if (!el) return;
+  if (!preSignEnabled) {
+    el.textContent = '';
+    el.style.color = 'var(--text-dim)';
+    return;
+  }
+  if (preSignInProgress) {
+    el.textContent = '⏳ Signing orders… (approve in MetaMask)';
+    el.style.color = 'var(--accent)';
+    return;
+  }
+  var upReady = preSignedOrders.up !== null;
+  var dnReady = preSignedOrders.down !== null;
+  var sellUp = preSignedSellOrders.up !== null;
+  var sellDn = preSignedSellOrders.down !== null;
+  var buyReady = upReady && dnReady;
+  var sellReady = sellUp && sellDn;
+  if (buyReady && sellReady) {
+    el.textContent = '✓ Pre-signed: BUY + SELL ready for instant execution';
+    el.style.color = 'var(--green)';
+  } else if (buyReady && !autoSellEnabled) {
+    el.textContent = '✓ BUY pre-signed — instant execution ready';
+    el.style.color = 'var(--green)';
+  } else if (buyReady) {
+    el.textContent = '✓ BUY pre-signed | ⚠ SELL not yet signed';
+    el.style.color = '#ffa500';
+  } else if (upReady || dnReady) {
+    el.textContent = '⚠ Partially signed';
+    el.style.color = '#ffa500';
+  } else if (tradingClient && clobTokenInfo) {
+    el.textContent = '⚠ Not signed yet — waiting for next market';
+    el.style.color = '#ffa500';
+  } else {
+    el.textContent = 'Connect wallet to enable pre-signing';
+    el.style.color = 'var(--text-dim)';
+  }
+}
+
+async function preSignBuyOrders() {
+  if (!tradingClient || !clobTokenInfo || preSignInProgress) return;
+  var sizeEl = document.getElementById('tradeSize');
+  var size = sizeEl ? parseFloat(sizeEl.value) : 10;
+  if (!size || size < 1) size = 10;
+  var buyPriceCents = getAutoBuyPriceCents();
+  var buyPrice = buyPriceCents / 100;
+  var sellPriceCents = getAutoSellPriceCents();
+  var sellPrice = sellPriceCents / 100;
+
+  preSignInProgress = true;
+  preSignedOrders = { up: null, down: null };
+  preSignedSellOrders = { up: null, down: null };
+  updatePreSignStatus();
+  setTradeMsg('Pre-signing buy' + (autoSellEnabled ? ' + sell' : '') + ' orders… approve in MetaMask', false);
+
+  try {
+    if (!_cachedOrderImports) {
+      _cachedOrderImports = await import('https://esm.sh/@polymarket/clob-client');
+    }
+    var { OrderType, Side } = _cachedOrderImports;
+
+    for (var s of ['up', 'down']) {
+      var tokenId = s === 'up'
+        ? (clobTokenInfo.isUpFirst ? clobTokenInfo.tokenIds[0] : clobTokenInfo.tokenIds[1])
+        : (clobTokenInfo.isUpFirst ? clobTokenInfo.tokenIds[1] : clobTokenInfo.tokenIds[0]);
+
+      var tickSize = '0.01';
+      var negRisk = false;
+      try { tickSize = await tradingClient.getTickSize(tokenId); } catch (_) {}
+      try { negRisk = await tradingClient.getNegRisk(tokenId); } catch (_) {}
+
+      // Pre-sign BUY
+      console.log('[BTC5m] Pre-signing BUY ' + s.toUpperCase() + ': ' + size + ' shares @ ' + buyPriceCents + '¢');
+      var signedBuy = await tradingClient.createOrder(
+        { tokenID: tokenId, price: buyPrice, size: size, side: Side.BUY },
+        { tickSize: tickSize, negRisk: negRisk }
+      );
+      preSignedOrders[s] = {
+        signedOrder: signedBuy, tokenId: tokenId, price: buyPrice,
+        size: size, priceCents: buyPriceCents, tickSize: tickSize, negRisk: negRisk
+      };
+      console.log('[BTC5m] ✓ Pre-signed BUY ' + s.toUpperCase());
+
+      // Pre-sign SELL
+      if (autoSellEnabled) {
+        console.log('[BTC5m] Pre-signing SELL ' + s.toUpperCase() + ': ' + size + ' shares @ ' + sellPriceCents + '¢');
+        var signedSell = await tradingClient.createOrder(
+          { tokenID: tokenId, price: sellPrice, size: size, side: Side.SELL },
+          { tickSize: tickSize, negRisk: negRisk }
+        );
+        preSignedSellOrders[s] = {
+          signedOrder: signedSell, tokenId: tokenId, price: sellPrice,
+          size: size, priceCents: sellPriceCents, tickSize: tickSize, negRisk: negRisk
+        };
+        console.log('[BTC5m] ✓ Pre-signed SELL ' + s.toUpperCase());
+      }
+    }
+
+    preSignSlug = currentSlug;
+    preSignInProgress = false;
+    var msg = '✓ Pre-signed! Buys @ ' + buyPriceCents + '¢';
+    if (autoSellEnabled) msg += ', sells @ ' + sellPriceCents + '¢';
+    setTradeMsg(msg + ' — instant execution ready', false);
+    updatePreSignStatus();
+  } catch (e) {
+    console.error('[BTC5m] Pre-sign error:', e);
+    preSignInProgress = false;
+    preSignedOrders = { up: null, down: null };
+    preSignedSellOrders = { up: null, down: null };
+    setTradeMsg('Pre-sign failed: ' + (e.message || e) + '. Orders will use normal signing.', true);
+    updatePreSignStatus();
+  }
+}
+
+async function postPreSignedOrder(side) {
+  var ps = preSignedOrders[side];
+  if (!ps || !ps.signedOrder || !tradingClient) return null;
+
+  try {
+    if (!_cachedOrderImports) {
+      _cachedOrderImports = await import('https://esm.sh/@polymarket/clob-client');
+    }
+    var { OrderType } = _cachedOrderImports;
+
+    console.log('[BTC5m] ⚡ Posting pre-signed ' + side.toUpperCase() + ' order');
+    var response = await tradingClient.postOrder(ps.signedOrder, OrderType.GTC);
+    console.log('[BTC5m] Pre-signed order response:', response);
+
+    // Invalidate used order
+    preSignedOrders[side] = null;
+    updatePreSignStatus();
+    return response;
+  } catch (e) {
+    console.error('[BTC5m] Post pre-signed order failed:', e);
+    preSignedOrders[side] = null;
+    updatePreSignStatus();
+    return null;
+  }
+}
+
+function invalidatePreSigned() {
+  preSignedOrders = { up: null, down: null };
+  preSignedSellOrders = { up: null, down: null };
+  preSignSlug = null;
+  updatePreSignStatus();
+}
+
+function playAutoSellSound() {
+  try {
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return;
+    var ctx = new C();
+    if (ctx.state === 'suspended') ctx.resume();
+    // Descending tone for sell
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 660;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
+    var osc2 = ctx.createOscillator();
+    var gain2 = ctx.createGain();
+    osc2.connect(gain2); gain2.connect(ctx.destination);
+    osc2.frequency.value = 440;
+    osc2.type = 'sine';
+    gain2.gain.setValueAtTime(0.12, ctx.currentTime + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+    osc2.start(ctx.currentTime + 0.15); osc2.stop(ctx.currentTime + 0.35);
+  } catch (e) {}
+}
+
+async function placeAutoSellOrder(side, tokenId, size) {
+  console.log('[BTC5m] ── placeAutoSellOrder ──', { side, tokenId: tokenId.slice(0,12)+'…', size });
+  if (!tradingClient || !clobTokenInfo) {
+    setTradeMsg('Auto-sell: wallet not connected.', true);
+    return;
+  }
+  var sellPriceCents = getAutoSellPriceCents();
+  var price = sellPriceCents / 100;
+
+  // Refresh conditional token allowance before selling
+  await refreshConditionalAllowance(tokenId);
+
+  // ── Try pre-signed sell order first ──
+  var ps = preSignedSellOrders[side];
+  if (preSignEnabled && ps && ps.signedOrder && preSignSlug === currentSlug) {
+    setTradeMsg('⚡ Auto-sell: posting pre-signed SELL ' + side.toUpperCase() + ' at ' + sellPriceCents + '¢…', false);
+    try {
+      if (!_cachedOrderImports) {
+        _cachedOrderImports = await import('https://esm.sh/@polymarket/clob-client');
+      }
+      var { OrderType } = _cachedOrderImports;
+      console.log('[BTC5m] ⚡ Posting pre-signed SELL ' + side.toUpperCase());
+      var response = await tradingClient.postOrder(ps.signedOrder, OrderType.GTC);
+      console.log('[BTC5m] Pre-signed sell response:', JSON.stringify(response));
+      preSignedSellOrders[side] = null;
+      updatePreSignStatus();
+
+      if (response && !response.error && response.success !== false) {
+        var id = response.orderID || response.orderId;
+        setTradeMsg('⚡ Auto-sell placed at ' + sellPriceCents + '¢' + (id ? ' ID: ' + id : ''), false);
+        playAutoSellSound();
+        loadOpenOrdersAndBalance();
+        // ── Record the trade (pre-signed path was missing this) ──
+        var buyPcPS = (lastPlacedBuy && lastPlacedBuy.priceCents) ? lastPlacedBuy.priceCents : getAutoBuyPriceCents();
+        onAutoSellCompleted(buyPcPS, sellPriceCents, size);
+        return;
+      }
+      console.log('[BTC5m] Pre-signed sell failed:', response && (response.error || response.errorMsg));
+    } catch (e) {
+      console.error('[BTC5m] Pre-signed sell error:', e);
+      preSignedSellOrders[side] = null;
+      updatePreSignStatus();
+    }
+  }
+
+  // ── Normal signing flow (with allowance-retry) ──
+  if (!_cachedOrderImports) {
+    _cachedOrderImports = await import('https://esm.sh/@polymarket/clob-client');
+  }
+  var { OrderType, Side } = _cachedOrderImports;
+  var tickSize = '0.01';
+  var negRisk = false;
+  try { tickSize = await tradingClient.getTickSize(tokenId); } catch (_) {}
+  try { negRisk = await tradingClient.getNegRisk(tokenId); } catch (_) {}
+  var orderSize = typeof size === 'number' ? size : parseFloat(size);
+
+  // Attempt up to 3 times — on allowance errors, refresh and retry with backoff
+  var MAX_TRIES = 3;
+  for (var _attempt = 1; _attempt <= MAX_TRIES; _attempt++) {
+    setTradeMsg('Auto-sell: placing sell at ' + sellPriceCents + '¢' + (_attempt > 1 ? ' (attempt ' + _attempt + ')' : '') + '…', false);
+    try {
+      console.log('[BTC5m] Auto-sell attempt', _attempt, { tokenId: tokenId.slice(0,12)+'...', price, orderSize });
+      var response = await tradingClient.createAndPostOrder(
+        { tokenID: tokenId, price: price, size: orderSize, side: Side.SELL },
+        { tickSize: tickSize, negRisk: negRisk },
+        OrderType.GTC
+      );
+      console.log('[BTC5m] Auto-sell response:', JSON.stringify(response));
+      var errMsg = response && (response.error || (response.success === false && (response.errorMsg || response.error)));
+      if (errMsg) {
+        if (/not enough balance|allowance/i.test(errMsg) && _attempt < MAX_TRIES) {
+          setTradeMsg('Auto-sell: allowance issue, refreshing and retrying (' + _attempt + '/' + MAX_TRIES + ')…', false);
+          console.log('[BTC5m] Allowance error on attempt', _attempt, '— refreshing and waiting 1.5s');
+          await refreshConditionalAllowance(tokenId);
+          await new Promise(function(r){ setTimeout(r, 1500); });
+          continue; // retry
+        }
+        setTradeMsg('Auto-sell failed: ' + errMsg, true);
+        return;
+      }
+      // Success
+      var id = response.orderID || response.orderId;
+      setTradeMsg('Auto-sell placed at ' + sellPriceCents + '¢' + (id ? ' ID: ' + id : ''), false);
+      playAutoSellSound();
+      loadOpenOrdersAndBalance();
+      var buyPc = (lastPlacedBuy && lastPlacedBuy.priceCents) ? lastPlacedBuy.priceCents : getAutoBuyPriceCents();
+      onAutoSellCompleted(buyPc, sellPriceCents, size);
+      return;
+    } catch (e) {
+      console.error('[BTC5m] Auto-sell error (attempt ' + _attempt + '):', e);
+      if (/not enough balance|allowance/i.test(e.message || '') && _attempt < MAX_TRIES) {
+        setTradeMsg('Auto-sell: allowance issue, refreshing and retrying (' + _attempt + '/' + MAX_TRIES + ')…', false);
+        await refreshConditionalAllowance(tokenId);
+        await new Promise(function(r){ setTimeout(r, 1500); });
+        continue;
+      }
+      setTradeMsg('Auto-sell failed: ' + (e.message || e), true);
+      return;
+    }
+  }
+  setTradeMsg('Auto-sell failed after ' + MAX_TRIES + ' attempts. Check wallet allowances at polymarket.com.', true);
+}
+
+function tryClaimWinnings(ev) {
+  if (!currentSlug) return;
+  var url = 'https://polymarket.com/event/' + currentSlug;
+  setTradeMsg('Market settled. Claim winnings on Polymarket.', false);
+  try {
+    window.open(url, '_blank', 'noopener');
+  } catch (e) {}
+}
+
+async function buyAt99() {
+  if (waitingFor99) {
+    waitingFor99 = false;
+    updateBuy99ButtonLabel();
+    setTradeMsg('Cancelled.', false);
+    return;
+  }
+  var levels = getEnabledLevels();
+  if (levels.length === 0) { setTradeMsg('No ladder levels enabled.', true); return; }
+  var upEl = document.getElementById('upPct');
+  var dnEl = document.getElementById('downPct');
+  var upCents = upEl ? parseInt(upEl.textContent, 10) : NaN;
+  var dnCents = dnEl ? parseInt(dnEl.textContent, 10) : NaN;
+
+  // Find the lowest level already hit — buy there immediately
+  for (var bi = 0; bi < levels.length; bi++) {
+    var bt = levels[bi].price;
+    if (upCents >= bt || dnCents >= bt) {
+      var btn = document.getElementById('btnBuy99');
+      if (btn) btn.disabled = true;
+      lastFiredLevelPrice = bt;
+      try {
+        if (upCents >= bt && !autoBuy99Done.up)   { autoBuy99Done.up   = true; await placeOrderAtPrice('up',   bt, false); }
+        if (dnCents >= bt && !autoBuy99Done.down) { autoBuy99Done.down = true; await placeOrderAtPrice('down', bt, false); }
+        updateLadderStatusIcons();
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+      return; // first hit wins
+    }
+  }
+  // Nothing hit yet — arm the wait
+  waitingFor99 = true;
+  updateBuy99ButtonLabel();
+  setTradeMsg('Waiting for ' + levels[0].price + '¢ (L1, first hit wins)…', false);
+}
+
+function tryAutoBuy99(upCents, downCents) {
+  var el = document.getElementById('autoBuy99Check');
+  if (el && !el.checked) return;
+  if (!tradingClient || !clobTokenInfo) return;
+
+  // Warmup filter
+  var warmupEl = document.getElementById('warmupCheck');
+  if (warmupEl && warmupEl.checked && currentMarketStartTs !== null) {
+    var elapsed = Date.now() / 1000 - currentMarketStartTs;
+    var WARMUP_SECS = parseInt((document.getElementById('warmupSec') || {}).value || 150, 10);
+    if (elapsed < WARMUP_SECS) {
+      var remaining = Math.ceil(WARMUP_SECS - elapsed);
+      var mm = Math.floor(remaining / 60), ss = remaining % 60;
+      setTradeMsg('⏳ Warmup: auto-buy locked for ' + mm + ':' + String(ss).padStart(2,'0') + ' more', false);
+      return;
+    }
+  }
+
+  // ── Price ladder: first-hit-wins ──────────────────────────────────────────
+  // Iterate levels lowest→highest. The FIRST enabled level whose price is hit
+  // triggers the order. All other levels are then ignored for this market.
+  var levels = getEnabledLevels(); // sorted lowest→highest
+  if (levels.length === 0) return;
+
+  for (var i = 0; i < levels.length; i++) {
+    var target = levels[i].price;
+
+    if (upCents >= target && !autoBuy99Done.up) {
+      if (!isEdgeAllowed(upCents, downCents)) {
+        setTradeMsg('⚡ UP hit ' + target + '¢ (L'+(i+1)+') — Edge score too low, skipping.', true);
+        return; // don't try higher levels either
+      }
+      autoBuy99Done.up = true;
+      lastFiredLevelPrice = target;
+      updateLadderStatusIcons();
+      startStopLossWatch('up', target, parseFloat((document.getElementById('tradeSize')||{}).value||'0')||0);
+      placeOrderAtPrice('up', target);
+      return; // first hit wins — stop checking higher levels
+    }
+
+    if (downCents >= target && !autoBuy99Done.down) {
+      if (!isEdgeAllowed(upCents, downCents)) {
+        setTradeMsg('⚡ DOWN hit ' + target + '¢ (L'+(i+1)+') — Edge score too low, skipping.', true);
+        return;
+      }
+      autoBuy99Done.down = true;
+      lastFiredLevelPrice = target;
+      updateLadderStatusIcons();
+      startStopLossWatch('down', target, parseFloat((document.getElementById('tradeSize')||{}).value||'0')||0);
+      placeOrderAtPrice('down', target);
+      return;
+    }
+  }
+}
+
+async function placeOrderAtPrice(side, priceCents, manageButton) {
+  if (!clobTokenInfo) {
+    setTradeMsg('Market data not ready.', true);
+    return;
+  }
+  if (!tradingClient) {
+    setTradeMsg('Connect MetaMask first.', true);
+    return;
+  }
+  const sizeEl = document.getElementById('tradeSize');
+  const size = sizeEl ? parseFloat(sizeEl.value, 10) : 10;
+  if (!size || size < 1) {
+    setTradeMsg('Enter size ≥ 1 in the form above.', true);
+    return;
+  }
+  const tokenId = side === 'up'
+    ? (clobTokenInfo.isUpFirst ? clobTokenInfo.tokenIds[0] : clobTokenInfo.tokenIds[1])
+    : (clobTokenInfo.isUpFirst ? clobTokenInfo.tokenIds[1] : clobTokenInfo.tokenIds[0]);
+  const price = (priceCents || getAutoBuyPriceCents()) / 100;
+  const btn99 = document.getElementById('btnBuy99');
+  if (manageButton !== false && btn99) btn99.disabled = true;
+  const orderSize = typeof size === 'number' ? size : parseFloat(size);
+
+  // ── Try pre-signed order first ──
+  var ps = preSignedOrders[side];
+  if (preSignEnabled && ps && ps.signedOrder && preSignSlug === currentSlug) {
+    setTradeMsg('⚡ Posting pre-signed ' + side.toUpperCase() + ' order at ' + (priceCents || getAutoBuyPriceCents()) + '¢...', false);
+    try {
+      var response = await postPreSignedOrder(side);
+      if (response && response.success !== false) {
+        var id = response.orderID || response.orderId;
+        setTradeMsg('⚡ ' + (id ? 'Order placed instantly. ID: ' + id : (response.errorMsg || 'Order submitted')));
+        loadOpenOrdersAndBalance();
+        if (id && autoSellEnabled) {
+          trackBuyOrder(id, side, tokenId, orderSize, priceCents || getAutoBuyPriceCents());
+        }
+        if (manageButton !== false && btn99) btn99.disabled = false;
+        return;
+      }
+      // Pre-signed failed, fall through to normal
+      console.log('[BTC5m] Pre-signed order failed, falling back to normal signing');
+      if (response && response.errorMsg) {
+        console.log('[BTC5m] Error:', response.errorMsg);
+      }
+    } catch (e) {
+      console.error('[BTC5m] Pre-signed post error:', e);
+    }
+    setTradeMsg('Pre-signed order expired, signing fresh order…', false);
+  } else {
+    setTradeMsg('Placing order at ' + (priceCents || getAutoBuyPriceCents()) + '¢...', false);
+  }
+
+  // ── Normal signing flow (fallback) ──
+  try {
+    if (!_cachedOrderImports) {
+      _cachedOrderImports = await import('https://esm.sh/@polymarket/clob-client');
+    }
+    const { OrderType, Side } = _cachedOrderImports;
+    var tickSize = '0.01';
+    var negRisk = false;
+    try {
+      tickSize = await tradingClient.getTickSize(tokenId);
+    } catch (_) {}
+    try {
+      negRisk = await tradingClient.getNegRisk(tokenId);
+    } catch (_) {}
+    const response = await tradingClient.createAndPostOrder(
+      { tokenID: tokenId, price, size: orderSize, side: Side.BUY },
+      { tickSize, negRisk },
+      OrderType.GTC
+    );
+    console.log('[BTC5m] order response', response);
+    if (response && response.success === false && response.errorMsg) {
+      var msg = response.errorMsg;
+      if (/not enough balance|allowance/i.test(msg)) msg = 'Not enough USDCe balance or allowance. Fund your proxy with USDCe on Polygon and set allowances at polymarket.com (e.g. deposit or place one trade there first).';
+      setTradeMsg(msg, true);
+    } else {
+      const id = response.orderID || response.orderId;
+      setTradeMsg(id ? 'Order placed. ID: ' + id : (response.errorMsg || 'Order submitted'));
+      loadOpenOrdersAndBalance();
+      if (id && autoSellEnabled) {
+        trackBuyOrder(id, side, tokenId, orderSize, priceCents || getAutoBuyPriceCents());
+      }
+    }
+  } catch (e) {
+    console.error('[BTC5m] order error', e);
+    setTradeMsg('Order failed: ' + orderErrorMsg(e), true);
+  }
+  if (manageButton !== false && btn99) btn99.disabled = false;
+}
+
+async function placeOrder() {
+  if (!clobTokenInfo) {
+    setTradeMsg('Market data not ready.', true);
+    return;
+  }
+  if (!tradingClient) {
+    setTradeMsg('Connect MetaMask first.', true);
+    return;
+  }
+  const sideEl = document.getElementById('tradeSide');
+  const priceEl = document.getElementById('tradePrice');
+  const sizeEl = document.getElementById('tradeSize');
+  const side = sideEl?.value || 'up';
+  const priceCents = parseInt(priceEl?.value, 10);
+  const size = parseFloat(sizeEl?.value, 10);
+  if (!priceCents || priceCents < 1 || priceCents > 99) {
+    setTradeMsg('Enter price 1–99¢', true);
+    return;
+  }
+  if (!size || size < 1) {
+    setTradeMsg('Enter size ≥ 1', true);
+    return;
+  }
+  const tokenId = side === 'up'
+    ? (clobTokenInfo.isUpFirst ? clobTokenInfo.tokenIds[0] : clobTokenInfo.tokenIds[1])
+    : (clobTokenInfo.isUpFirst ? clobTokenInfo.tokenIds[1] : clobTokenInfo.tokenIds[0]);
+  const price = priceCents / 100;
+  setTradeMsg('Placing order...', false);
+  const btn = document.getElementById('btnPlaceOrder');
+  if (btn) btn.disabled = true;
+  try {
+    const { OrderType, Side } = await import('https://esm.sh/@polymarket/clob-client');
+    var tickSize = '0.01';
+    var negRisk = false;
+    try {
+      tickSize = await tradingClient.getTickSize(tokenId);
+    } catch (_) {}
+    try {
+      negRisk = await tradingClient.getNegRisk(tokenId);
+    } catch (_) {}
+    const orderSize = typeof size === 'number' ? size : parseFloat(size);
+    const response = await tradingClient.createAndPostOrder(
+      { tokenID: tokenId, price, size: orderSize, side: Side.BUY },
+      { tickSize, negRisk },
+      OrderType.GTC
+    );
+    console.log('[BTC5m] Place order response', response);
+    if (response && response.success === false && response.errorMsg) {
+      var msg = response.errorMsg;
+      if (/not enough balance|allowance/i.test(msg)) msg = 'Not enough USDCe balance or allowance. Fund your proxy with USDCe on Polygon and set allowances at polymarket.com (e.g. deposit or place one trade there first).';
+      setTradeMsg(msg, true);
+    } else {
+      const id = response.orderID || response.orderId;
+      setTradeMsg(id ? 'Order placed. ID: ' + id : (response.errorMsg || 'Order submitted'));
+      loadOpenOrdersAndBalance();
+      // Track for auto-sell
+      if (id && autoSellEnabled) {
+        trackBuyOrder(id, side, tokenId, orderSize, priceCents);
+      }
+    }
+    if (btn) btn.disabled = false;
+  } catch (e) {
+    console.error('[BTC5m] Place order error', e);
+    setTradeMsg('Order failed: ' + orderErrorMsg(e), true);
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// ⚡  EDGE ENGINE — Smart Trade Filter
+// ══════════════════════════════════════════════
+
+// Rolling price history: { ts, upCents, downCents, spreadCents }[]
+var priceHistory = [];
+var MAX_HISTORY = 120; // last ~120 seconds at 1-poll/sec
+
+// Historical outcome streak: derived from fetchHistory() results
+// Each entry: { startTs, outcome: 'up'|'down'|null }
+var marketOutcomeHistory = [];
+
+// ── Edge Engine persisted settings ──────────────
+function _edgeGet(key, def) {
+  try { var v = localStorage.getItem('edge_' + key); return v !== null ? v : def; } catch(e) { return def; }
+}
+function _edgeSet(key, val) {
+  try { localStorage.setItem('edge_' + key, val); } catch(e) {}
+}
+// Load all edge settings (used to hydrate the HTML template and JS logic)
+var _edgeSettings = {
+  filterTimeCheck:  _edgeGet('filterTimeCheck',  'true') === 'true',
+  filterTimeSec:    _edgeGet('filterTimeSec',    '60'),
+  filterTrendCheck: _edgeGet('filterTrendCheck', 'true') === 'true',
+  filterVolCheck:   _edgeGet('filterVolCheck',   'true') === 'true',
+  filterVolPct:     _edgeGet('filterVolPct',     '20'),
+  filterMomCheck:   _edgeGet('filterMomCheck',   'true') === 'true',
+  filterMomPct:     _edgeGet('filterMomPct',     '3'),
+  edgeGateCheck:    _edgeGet('edgeGateCheck',    'true') === 'true',
+  edgeGateThresh:   _edgeGet('edgeGateThresh',   '50'),
+  stopLossCheck:    _edgeGet('stopLossCheck',    'true') === 'true',
+  stopLossPct:      _edgeGet('stopLossPct',      '8'),
+  filterSpreadCheck: _edgeGet('filterSpreadCheck', 'true') === 'true',
+  filterSpreadMax:   _edgeGet('filterSpreadMax',   '8'),
+  filterStreakCheck: _edgeGet('filterStreakCheck', 'false') === 'true',
+  filterStreakMin:   _edgeGet('filterStreakMin',   '3'),
+  warmupCheck:      _edgeGet('warmupCheck',      'false') === 'true',
+  warmupSec:        _edgeGet('warmupSec',         '150'),
+};
+
+// P&L tracking (persisted to localStorage)
+var edgePnL = (function () {
+  try { return JSON.parse(localStorage.getItem('edgePnL') || 'null'); } catch (e) { return null; }
+})() || { totalPnl: 0, trades: 0, wins: 0, lastReset: Date.now(), log: [] };
+if (!edgePnL.log) edgePnL.log = []; // migrate old saves
+
+function saveEdgePnL() { try { localStorage.setItem('edgePnL', JSON.stringify(edgePnL)); } catch (e) {} }
+
+function recordTrade(buyPrice, sellPrice, size) {
+  var pnl = (sellPrice - buyPrice) * size;
+  var isWin = pnl > 0;
+  console.log('[BTC5m] recordTrade: buy=' + Math.round(buyPrice*100) + '¢ sell=' + Math.round(sellPrice*100) + '¢ size=' + size + ' pnl=' + pnl.toFixed(4) + ' → ' + (isWin ? 'WIN' : (pnl < 0 ? 'LOSS' : 'BREAK-EVEN')));
+  edgePnL.totalPnl += pnl;
+  edgePnL.trades++;
+  if (isWin) edgePnL.wins++;
+  // Store per-trade detail for optimizer (keep last 50)
+  edgePnL.log.push({
+    ts:        Date.now(),
+    buyPrice:  Math.round(buyPrice  * 100),
+    sellPrice: Math.round(sellPrice * 100),
+    size:      size,
+    pnl:       pnl,
+  });
+  if (edgePnL.log.length > 50) edgePnL.log.shift();
+  saveEdgePnL();
+  updateEdgePnLDisplay();
+  // Trigger optimizer after every trade
+  runParamOptimizer();
+}
+
+function updateEdgePnLDisplay() {
+  var pnlEl = document.getElementById('pnlChip');
+  var wrEl = document.getElementById('winRateChip');
+  var trEl = document.getElementById('tradesChip');
+  if (!pnlEl) return;
+  var pnl = edgePnL.totalPnl;
+  var pnlStr = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
+  pnlEl.textContent = 'P&L: ' + pnlStr;
+  pnlEl.className = 'pnl-chip ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
+  var wr = edgePnL.trades > 0 ? Math.round(edgePnL.wins / edgePnL.trades * 100) : 0;
+  wrEl.textContent = 'Win rate: ' + wr + '%';
+  wrEl.className = 'pnl-chip ' + (wr >= 55 ? 'pos' : wr >= 40 ? '' : 'neg');
+  trEl.textContent = 'Trades: ' + edgePnL.trades;
+}
+
+// Stop-loss: track last placed buy { side, priceCents, ts }
+var lastPlacedBuy = null;
+var stopLossInterval = null;
+
+function startStopLossWatch(side, priceCents, size) {
+  var tradeSize = size || parseFloat((document.getElementById('tradeSize') || {}).value || '0') || 0;
+  lastPlacedBuy = { side: side, priceCents: priceCents, size: tradeSize, ts: Date.now() };
+  if (stopLossInterval) clearInterval(stopLossInterval);
+  stopLossInterval = setInterval(checkStopLoss, 1000);
+}
+
+function checkStopLoss() {
+  if (!lastPlacedBuy || !tradingClient) { clearInterval(stopLossInterval); return; }
+  var slEl = document.getElementById('stopLossCheck');
+  if (!slEl || !slEl.checked) return;
+  var slPct = parseInt((document.getElementById('stopLossPct') || {}).value || 8, 10);
+  var up = document.getElementById('upPct');
+  var dn = document.getElementById('downPct');
+  if (!up || !dn) return;
+  var upCents = parseInt(up.textContent, 10);
+  var downCents = parseInt(dn.textContent, 10);
+  var currentPrice = lastPlacedBuy.side === 'up' ? upCents : downCents;
+  var drop = lastPlacedBuy.priceCents - currentPrice;
+  if (drop >= slPct) {
+    log('[Edge] Stop-loss triggered: ' + lastPlacedBuy.side + ' dropped ' + drop + '¢ from entry. Cancelling open orders.');
+    setTradeMsg('🛑 Stop-loss: ' + lastPlacedBuy.side + ' dropped ' + drop + '¢ — cancelling orders.', true);
+
+    // ── Record the loss before clearing state ────────────────────────────────
+    // exitPrice = current market price (what we'd get if we sold now)
+    var exitPriceCents = currentPrice; // already read above
+    var entryPriceCents = lastPlacedBuy.priceCents;
+    var lossSize = lastPlacedBuy.size || parseFloat((document.getElementById('tradeSize') || {}).value || '0') || 0;
+    if (lossSize > 0) {
+      onAutoSellCompleted(entryPriceCents, exitPriceCents, lossSize);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Cancel all open orders
+    if (tradingClient) {
+      tradingClient.getOpenOrders().then(function(res) {
+        var orders = res && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+        orders.forEach(function(o) {
+          var oid = o.id || o.orderID || o.order_id || '';
+          if (oid) tradingClient.cancelOrder(oid).catch(function() {});
+        });
+      }).catch(function() {});
+    }
+    lastPlacedBuy = null;
+    clearInterval(stopLossInterval);
+    stopLossInterval = null;
+  }
+}
+
+// Record a completed round-trip
+// ── Parameter Optimizer ─────────────────────────────────────────────────────
+// Calculates optimal buy price, sell price, and trade size from P&L history.
+//
+// Buy price:  Analyzes win rate at different entry price bands. Lower entry =
+//             wider margin but fewer fills. Finds the band with best risk-adj return.
+//             Also watches current price velocity — fast-moving markets get a
+//             slightly lower target to avoid chasing.
+//
+// Sell price: Kelly-informed exit. If win rate is high, we can hold for more.
+//             If win rate is low, tighten to preserve capital. Also respects
+//             time remaining — tighter target when <90s left.
+//
+// Trade size: Full Kelly Criterion: f = (p*b - q) / b
+//             where p=win rate, q=loss rate, b=avg win / avg loss.
+//             Applied at 50% fractional Kelly for safety.
+//             Capped at 25% of balance to prevent over-exposure.
+
+var _optimizerSuggestion = null; // { buyPrice, sellPrice, size, reason }
+
+function runParamOptimizer() {
+  var panelEl = document.getElementById('optimizerPanel');
+  var statusEl = document.getElementById('optStatus');
+  var applyBtn = document.getElementById('btnApplyOpt');
+  if (!panelEl) return;
+
+  var enabledEl = document.getElementById('optimizerEnabled');
+  if (enabledEl && !enabledEl.checked) {
+    if (statusEl) statusEl.textContent = 'Optimizer disabled';
+    return;
+  }
+
+  var log = edgePnL.log || [];
+  var MIN_TRADES = 3;
+  if (log.length < MIN_TRADES) {
+    if (statusEl) statusEl.textContent = 'Need at least ' + MIN_TRADES + ' trades to optimize (' + log.length + ' so far)';
+    if (applyBtn) applyBtn.disabled = true;
+    return;
+  }
+
+  // ── 1. Win rate and avg win/loss from log ──────────────────────────────────
+  var wins = log.filter(function(t) { return t.pnl > 0; });
+  var losses = log.filter(function(t) { return t.pnl <= 0; });
+  var winRate = wins.length / log.length;
+  var avgWin  = wins.length   > 0 ? wins.reduce(function(s,t){ return s + t.pnl; }, 0) / wins.length   : 0;
+  var avgLoss = losses.length > 0 ? Math.abs(losses.reduce(function(s,t){ return s + t.pnl; }, 0) / losses.length) : 1;
+
+  // ── 2. Optimal buy price ───────────────────────────────────────────────────
+  // Group trades by entry price band and find highest avg PnL per $ risked
+  var bands = {}; // keyed by floor-to-5 cent band
+  log.forEach(function(t) {
+    var band = Math.floor(t.buyPrice / 5) * 5;
+    if (!bands[band]) bands[band] = { pnl: 0, count: 0 };
+    bands[band].pnl += t.pnl;
+    bands[band].count++;
+  });
+  var bestBand = null, bestAvgPnl = -Infinity;
+  Object.keys(bands).forEach(function(b) {
+    var avg = bands[b].pnl / bands[b].count;
+    if (bands[b].count >= 1 && avg > bestAvgPnl) {
+      bestAvgPnl = avg;
+      bestBand = parseInt(b, 10);
+    }
+  });
+  // Suggested buy: midpoint of best band, clipped to 80–97
+  var suggestedBuy = bestBand !== null
+    ? Math.max(80, Math.min(97, bestBand + 2))
+    : getAutoBuyPriceCents();
+
+  // Velocity adjustment: if price is racing fast, lower entry slightly to avoid chasing
+  var velocityPenalty = 0;
+  if (priceHistory.length >= 10) {
+    var highKey = 'upCents'; // will refine below
+    var curMax  = Math.max(
+      priceHistory[priceHistory.length - 1].upCents,
+      priceHistory[priceHistory.length - 1].downCents
+    );
+    var oldMax = Math.max(
+      priceHistory[Math.max(0, priceHistory.length - 10)].upCents,
+      priceHistory[Math.max(0, priceHistory.length - 10)].downCents
+    );
+    var vel10 = curMax - oldMax;
+    if (vel10 >= 8) velocityPenalty = 2;  // fast move: go 2¢ lower
+    if (vel10 >= 15) velocityPenalty = 4; // very fast: go 4¢ lower
+  }
+  suggestedBuy = Math.max(80, suggestedBuy - velocityPenalty);
+
+  // ── 3. Optimal sell price ─────────────────────────────────────────────────
+  // Base: current buy price + margin that reflects win rate
+  // High win rate → can hold for bigger target
+  // Low win rate  → tighten to capture what we can
+  var marginBasis = winRate >= 0.65 ? 8
+                  : winRate >= 0.50 ? 6
+                  : winRate >= 0.35 ? 4
+                  : 3;
+  // Time adjustment: if <90s left, tighten by 1-2¢
+  var secRem = getSecondsRemaining();
+  var timeAdj = (secRem !== null && secRem < 90) ? -2 : (secRem !== null && secRem < 150) ? -1 : 0;
+  var suggestedSell = Math.min(99, suggestedBuy + marginBasis + timeAdj);
+
+  // ── 4. Kelly Criterion trade size ─────────────────────────────────────────
+  // f* = (p * b - q) / b, where b = avgWin / avgLoss
+  var b = avgLoss > 0 ? avgWin / avgLoss : 1;
+  var q = 1 - winRate;
+  var kellyFull = b > 0 ? (winRate * b - q) / b : 0;
+  kellyFull = Math.max(0, Math.min(1, kellyFull));
+  var kellyFrac = kellyFull * 0.5; // 50% fractional Kelly
+
+  var suggestedSize = null;
+  var sizeReason = 'Kelly ' + Math.round(kellyFrac * 100) + '%';
+  if (lastKnownBalance !== null && lastKnownBalance > 0) {
+    var maxExposurePct = 0.25; // never more than 25% of balance in one trade
+    var exposurePct = Math.min(kellyFrac, maxExposurePct);
+    var dollarAmount = lastKnownBalance * exposurePct;
+    var buyPrice = suggestedBuy / 100;
+    suggestedSize = Math.floor(dollarAmount / buyPrice * 100) / 100;
+    suggestedSize = Math.max(1, suggestedSize);
+    sizeReason = 'Kelly ' + Math.round(kellyFrac * 100) + '% → $' + dollarAmount.toFixed(2);
+  } else {
+    // No balance: suggest based on win rate percentile only
+    suggestedSize = winRate >= 0.6 ? 15 : winRate >= 0.45 ? 10 : 5;
+    sizeReason = 'Kelly est (no balance)';
+  }
+
+  // ── 5. Store suggestion and update UI ──────────────────────────────────────
+  _optimizerSuggestion = {
+    buyPrice:  suggestedBuy,
+    sellPrice: suggestedSell,
+    size:      suggestedSize,
+  };
+
+  var buyReasonParts = [];
+  if (bestBand !== null) buyReasonParts.push('best band: ' + bestBand + '¢');
+  if (velocityPenalty > 0) buyReasonParts.push('-' + velocityPenalty + '¢ velocity');
+  var buyReason = buyReasonParts.join(', ') || 'default';
+
+  var sellReason = 'wr ' + Math.round(winRate * 100) + '%'
+    + (timeAdj < 0 ? ', -' + Math.abs(timeAdj) + '¢ time' : '');
+
+  // Update cards
+  var buyEl   = document.getElementById('optBuyPrice');
+  var sellEl  = document.getElementById('optSellPrice');
+  var sizeEl2 = document.getElementById('optSize');
+  var buyREl  = document.getElementById('optBuyReason');
+  var sellREl = document.getElementById('optSellReason');
+  var sizeREl = document.getElementById('optSizeReason');
+
+  if (buyEl)  buyEl.textContent  = suggestedBuy  + '¢';
+  if (sellEl) sellEl.textContent = suggestedSell + '¢';
+  if (sizeEl2) sizeEl2.textContent = suggestedSize !== null ? suggestedSize.toFixed(1) : '—';
+  if (buyREl)  buyREl.textContent  = buyReason;
+  if (sellREl) sellREl.textContent = sellReason;
+  if (sizeREl) sizeREl.textContent = sizeReason;
+
+  if (statusEl) statusEl.textContent =
+    'Based on ' + log.length + ' trades · wr ' + Math.round(winRate * 100) + '% · Kelly ' + Math.round(kellyFrac * 100) + '%';
+  if (applyBtn) applyBtn.disabled = false;
+
+  // Colour buy/sell cards by change direction
+  if (buyEl) {
+    var curBuy = getAutoBuyPriceCents();
+    buyEl.style.color = suggestedBuy < curBuy ? 'var(--green)' : suggestedBuy > curBuy ? 'var(--red)' : 'var(--text)';
+  }
+  if (sellEl) {
+    var curSell = getAutoSellPriceCents();
+    sellEl.style.color = suggestedSell > curSell ? 'var(--green)' : suggestedSell < curSell ? 'var(--red)' : 'var(--text)';
+  }
+}
+
+function applyOptimizerSuggestion() {
+  if (!_optimizerSuggestion) return;
+  var s = _optimizerSuggestion;
+
+  // Apply buy price → update ladder L1 (lowest level)
+  if (s.buyPrice) {
+    buyLadder[0].price   = s.buyPrice;
+    buyLadder[0].enabled = true;
+    var p0 = document.getElementById('ladderPrice0');
+    var e0 = document.getElementById('ladderEn0');
+    if (p0) p0.value = s.buyPrice;
+    if (e0) e0.checked = true;
+    saveBuyLadder();
+    updateAutoBuyPriceDisplay();
+    updateLadderStatusIcons();
+    invalidatePreSigned();
+  }
+
+  // Apply sell price
+  var sellSlider = document.getElementById('autoSellPriceSlider');
+  var sellValEl  = document.getElementById('autoSellPriceValue');
+  if (sellSlider && s.sellPrice) {
+    sellSlider.value = s.sellPrice;
+    _savedAutoSellPrice = String(s.sellPrice);
+    try { localStorage.setItem('autoSellPrice', s.sellPrice); } catch(e) {}
+  }
+  if (sellValEl) sellValEl.textContent = s.sellPrice;
+
+  // Apply size
+  var sizeInp = document.getElementById('tradeSize');
+  if (sizeInp && s.size !== null) {
+    sizeInp.value = s.size.toFixed(2);
+    _savedTradeSize = sizeInp.value;
+    try { localStorage.setItem('tradeSize', sizeInp.value); } catch(e) {}
+  }
+
+  var statusEl = document.getElementById('optStatus');
+  if (statusEl) statusEl.textContent = '✅ Applied — buy ' + s.buyPrice + '¢, sell ' + s.sellPrice + '¢, size ' + (s.size !== null ? s.size.toFixed(1) : '—');
+  setTradeMsg('🤖 Optimizer applied: buy ' + s.buyPrice + '¢, sell ' + s.sellPrice + '¢, size ' + (s.size !== null ? s.size.toFixed(1) : '—'));
+}
+
+function onAutoSellCompleted(buyPriceCents, sellPriceCents, size) {
+  recordTrade(buyPriceCents / 100, sellPriceCents / 100, size);
+  lastPlacedBuy = null;
+  if (stopLossInterval) { clearInterval(stopLossInterval); stopLossInterval = null; }
+}
+
+// ── Edge Score Calculation ────────────────────────
+function calcEdgeScore(upCents, downCents, secondsRemaining, spreadCents) {
+  var score = 0;
+  var details = { trend: '—', momentum: '—', timeOk: '—', vol: '—', spread: '—', streak: '—' };
+  // Max pts per signal (total = 100 when all enabled)
+  // Time:15, Trend:20, Momentum:25, Vol:15, Spread:15, Streak:10
+
+  // ── 1. Time filter (0–15 pts) ─────────────────────────────────────────────
+  var minSec = parseInt((document.getElementById('filterTimeSec') || {}).value || 60, 10);
+  var timeOk = secondsRemaining === null || secondsRemaining > minSec;
+  var timeScore = 0;
+  if (timeOk) {
+    // Partial credit: more time = higher score (15pts at full time, 8pts near cutoff)
+    if (secondsRemaining === null) {
+      timeScore = 15;
+    } else {
+      var timeRatio = Math.min(1, (secondsRemaining - minSec) / Math.max(1, 300 - minSec));
+      timeScore = Math.round(8 + timeRatio * 7);
+    }
+    details.timeOk = secondsRemaining !== null ? Math.round(secondsRemaining) + 's ✓' : '✓';
+  } else {
+    details.timeOk = secondsRemaining !== null ? Math.round(secondsRemaining) + 's ✗' : '✗';
+  }
+  var timeFilterOn = document.getElementById('filterTimeCheck') && document.getElementById('filterTimeCheck').checked;
+  if (!timeFilterOn) timeScore = 15;
+  score += timeScore;
+
+  // ── 2. Weighted trend (0–20 pts) ──────────────────────────────────────────
+  // Exponentially weight recent readings so the last 2s matters most
+  var trendScore = 0;
+  var trendLabel = '—';
+  if (priceHistory.length >= 4) {
+    var recent = priceHistory.slice(-12); // up to 12 seconds
+    var upWeight = 0, downWeight = 0;
+    for (var i = 0; i < recent.length; i++) {
+      var w = Math.pow(1.3, i); // exponential — latest reading counts most
+      if (recent[i].upCents > recent[i].downCents) upWeight += w;
+      else downWeight += w;
+    }
+    var totalW = upWeight + downWeight;
+    var dominantUp = upWeight >= downWeight;
+    var dominantCents = dominantUp ? upCents : downCents;
+    var dominantStrength = Math.round((Math.max(upWeight, downWeight) / totalW) * 100); // 50–100%
+    var target = getAutoBuyPriceCents();
+    var dominant = dominantUp ? 'UP' : 'DOWN';
+    if (dominantCents >= target - 5) {
+      // Scale pts by how dominant: 50%=10pts, 70%=15pts, 90%=20pts
+      trendScore = Math.round(10 + ((dominantStrength - 50) / 50) * 10);
+      trendLabel = dominant + ' ' + dominantStrength + '% ✓';
+    } else {
+      trendLabel = dominant + ' ' + dominantStrength + '% ✗';
+    }
+  }
+  var trendFilterOn = document.getElementById('filterTrendCheck') && document.getElementById('filterTrendCheck').checked;
+  if (!trendFilterOn) trendScore = 20;
+  score += trendScore;
+  details.trend = trendLabel;
+
+  // ── 3. Momentum + Acceleration (0–25 pts) ────────────────────────────────
+  // Velocity: price change over last 10s
+  // Acceleration: is velocity increasing or decreasing?
+  var momScore = 0;
+  var momLabel = '—';
+  var momReq = parseInt((document.getElementById('filterMomPct') || {}).value || 3, 10);
+  var highSideKey = upCents >= downCents ? 'upCents' : 'downCents';
+  var maxCents = Math.max(upCents, downCents);
+  if (priceHistory.length >= 15) {
+    var t10 = priceHistory[Math.max(0, priceHistory.length - 10)];
+    var t5  = priceHistory[Math.max(0, priceHistory.length - 5)];
+    var velocity10 = maxCents - t10[highSideKey];   // change over last 10s
+    var velocity5  = maxCents - t5[highSideKey];    // change over last 5s
+    var accel      = velocity5 - (velocity10 / 2);  // positive = speeding up
+    if (velocity10 >= momReq) {
+      // Base pts for meeting threshold
+      var velPts = Math.min(18, Math.round(10 + velocity10 * 1.5));
+      // Bonus for acceleration (up to +7pts), penalty for deceleration
+      var accelPts = Math.max(-5, Math.min(7, Math.round(accel * 2)));
+      momScore = Math.max(0, Math.min(25, velPts + accelPts));
+      var accelStr = accel > 0.5 ? '↑accel' : accel < -0.5 ? '↓decel' : 'steady';
+      momLabel = '+' + velocity10 + '¢ ' + accelStr + ' ✓';
+    } else {
+      momLabel = (velocity10 >= 0 ? '+' : '') + velocity10 + '¢ ✗ (need +' + momReq + '¢)';
+    }
+  } else if (priceHistory.length >= 10) {
+    var t10b = priceHistory[Math.max(0, priceHistory.length - 10)];
+    var vel10b = maxCents - t10b[highSideKey];
+    if (vel10b >= momReq) { momScore = 15; momLabel = '+' + vel10b + '¢ ✓'; }
+    else { momLabel = (vel10b >= 0 ? '+' : '') + vel10b + '¢ ✗'; }
+  }
+  var momFilterOn = document.getElementById('filterMomCheck') && document.getElementById('filterMomCheck').checked;
+  if (!momFilterOn) momScore = 25;
+  score += momScore;
+  details.momentum = momLabel;
+
+  // ── 4. Volatility (0–15 pts) ──────────────────────────────────────────────
+  var volScore = 0;
+  var volLabel = '—';
+  var volMax = parseInt((document.getElementById('filterVolPct') || {}).value || 20, 10);
+  if (priceHistory.length >= 30) {
+    var thirtyAgo = priceHistory[Math.max(0, priceHistory.length - 30)];
+    var upSwing   = Math.abs(upCents   - thirtyAgo.upCents);
+    var downSwing = Math.abs(downCents - thirtyAgo.downCents);
+    var maxSwing  = Math.max(upSwing, downSwing);
+    if (maxSwing <= volMax) {
+      // Partial: the calmer the market, the higher the score
+      volScore = Math.round(15 * (1 - maxSwing / Math.max(1, volMax)));
+      volScore = Math.max(5, volScore); // min 5 if under threshold
+      volLabel = maxSwing + '¢ ✓';
+    } else { volLabel = maxSwing + '¢ ✗ (limit ' + volMax + '¢)'; }
+  } else {
+    volScore = 8; // not enough data yet
+    volLabel = 'Measuring…';
+  }
+  var volFilterOn = document.getElementById('filterVolCheck') && document.getElementById('filterVolCheck').checked;
+  if (!volFilterOn) volScore = 15;
+  score += volScore;
+  details.vol = volLabel;
+
+  // ── 5. Spread (0–15 pts) ──────────────────────────────────────────────────
+  // Tight bid/ask spread = confident, liquid market = better fill + lower slippage
+  var spreadScore = 0;
+  var spreadLabel = '—';
+  var spreadMax = parseInt((document.getElementById('filterSpreadMax') || {}).value || 8, 10);
+  if (spreadCents !== null && spreadCents !== undefined) {
+    if (spreadCents <= spreadMax) {
+      // Tighter spread = higher score
+      spreadScore = Math.round(15 * (1 - spreadCents / Math.max(1, spreadMax + 2)));
+      spreadScore = Math.max(5, spreadScore);
+      spreadLabel = spreadCents + '¢ spread ✓';
+    } else {
+      spreadLabel = spreadCents + '¢ spread ✗ (max ' + spreadMax + '¢)';
+    }
+  } else {
+    spreadScore = 8; // CLOB not available, partial credit
+    spreadLabel = 'N/A (Gamma)';
+  }
+  var spreadFilterOn = document.getElementById('filterSpreadCheck') && document.getElementById('filterSpreadCheck').checked;
+  if (!spreadFilterOn) spreadScore = 15;
+  score += spreadScore;
+  details.spread = spreadLabel;
+
+  // ── 6. Outcome streak (0–10 pts, awareness/boost) ────────────────────────
+  // Not a gate — adds points if recent history shows a consistent streak
+  // because a dominant side winning repeatedly may indicate a persistent micro-trend
+  var streakScore = 0;
+  var streakLabel = '—';
+  var streakMin = parseInt((document.getElementById('filterStreakMin') || {}).value || 3, 10);
+  var knownOutcomes = marketOutcomeHistory.filter(function(m) { return m.outcome !== null; });
+  if (knownOutcomes.length >= 2) {
+    // Find current streak length and direction
+    var streakSide = knownOutcomes[0].outcome; // most recent first (hist[0] = most recent)
+    var streakLen = 1;
+    for (var si = 1; si < knownOutcomes.length; si++) {
+      if (knownOutcomes[si].outcome === streakSide) streakLen++;
+      else break;
+    }
+    var highSideName = upCents >= downCents ? 'up' : 'down';
+    var streakMatchesBuy = streakSide === highSideName;
+    var sideLabel = streakSide === 'up' ? '↑' : '↓';
+    if (streakLen >= streakMin) {
+      if (streakMatchesBuy) {
+        streakScore = Math.min(10, streakLen * 2);
+        streakLabel = sideLabel + '×' + streakLen + ' ✓ (streak aligns)';
+      } else {
+        streakScore = 0;
+        streakLabel = sideLabel + '×' + streakLen + ' ✗ (opposite streak)';
+      }
+    } else {
+      streakScore = 5; // neutral — short or mixed
+      streakLabel = sideLabel + '×' + streakLen + ' (short)';
+    }
+  } else if (knownOutcomes.length > 0) {
+    streakScore = 5;
+    streakLabel = 'Loading…';
+  }
+  var streakFilterOn = document.getElementById('filterStreakCheck') && document.getElementById('filterStreakCheck').checked;
+  if (!streakFilterOn) streakScore = 10;
+  score += streakScore;
+  details.streak = streakLabel;
+
+  return { score, details };
+}
+
+function getSecondsRemaining() {
+  var cd = document.getElementById('cd');
+  if (!cd) return null;
+  var parts = cd.textContent.split(':');
+  if (parts.length !== 2) return null;
+  var mm = parseInt(parts[0], 10), ss = parseInt(parts[1], 10);
+  if (isNaN(mm) || isNaN(ss)) return null;
+  return mm * 60 + ss;
+}
+
+function updateEdgeEngine(upCents, downCents, spreadCents) {
+  // Push to history (include spread)
+  priceHistory.push({ ts: Date.now(), upCents, downCents, spreadCents: spreadCents !== null ? spreadCents : null });
+  if (priceHistory.length > MAX_HISTORY) priceHistory.shift();
+
+  var secRem = getSecondsRemaining();
+  var { score, details } = calcEdgeScore(upCents, downCents, secRem, spreadCents);
+
+  // Update stat boxes
+  function setStatEl(id, val, cls) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = val; el.className = 'edge-stat-value ' + cls; }
+  }
+  var trendCls  = details.trend.includes('✓')   ? 'pos' : (details.trend === '—'   ? 'neutral' : 'neg');
+  var momCls    = details.momentum.includes('✓') ? 'pos' : (details.momentum === '—'? 'neutral' : 'neg');
+  var timeCls   = details.timeOk.includes('✓')  ? 'pos' : (details.timeOk === '—'  ? 'neutral' : 'neg');
+  var volCls    = details.vol.includes('✓')      ? 'pos' : (details.vol === '—'     ? 'neutral' : (details.vol.includes('Meas') ? 'neutral' : 'neg'));
+  var spreadCls = details.spread.includes('✓')   ? 'pos' : (details.spread === '—'  ? 'neutral' : (details.spread.includes('N/A') ? 'neutral' : 'neg'));
+  var streakCls = details.streak.includes('✓')   ? 'pos' : (details.streak === '—'  ? 'neutral' : (details.streak.includes('short') || details.streak.includes('Load') ? 'neutral' : 'neg'));
+  setStatEl('edgeTrend',    details.trend,    trendCls);
+  setStatEl('edgeMomentum', details.momentum, momCls);
+  setStatEl('edgeTimeOk',   details.timeOk,   timeCls);
+  setStatEl('edgeVol',      details.vol,      volCls);
+  setStatEl('edgeSpread',   details.spread,   spreadCls);
+  setStatEl('edgeStreak',   details.streak,   streakCls);
+
+  // Signal bar
+  var fill = document.getElementById('edgeSignalFill');
+  var scoreLabel = document.getElementById('edgeScoreLabel');
+  if (fill) {
+    fill.style.width = score + '%';
+    fill.style.background = score >= 75 ? 'var(--green)' : score >= 50 ? '#ffa500' : 'var(--red)';
+  }
+  if (scoreLabel) scoreLabel.textContent = score + ' / 100';
+
+  // Recommendation
+  var recoEl = document.getElementById('edgeReco');
+  var threshold = parseInt((document.getElementById('edgeGateThresh') || {}).value || 50, 10);
+  var gateOn = document.getElementById('edgeGateCheck') && document.getElementById('edgeGateCheck').checked;
+  var target = getAutoBuyPriceCents();
+  var highSideCents = Math.max(upCents, downCents);
+  var highSide = upCents >= downCents ? '↑ UP' : '↓ DOWN';
+  if (recoEl) {
+    if (highSideCents < target - 5) {
+      recoEl.textContent = 'Waiting — ' + highSide + ' at ' + highSideCents + '¢ (target ' + target + '¢)';
+      recoEl.className = 'edge-recommendation neutral';
+    } else if (!gateOn || score >= threshold) {
+      recoEl.textContent = '✅ GO — Edge score ' + score + '/100 — Buy ' + highSide + ' at ' + highSideCents + '¢';
+      recoEl.className = 'edge-recommendation go';
+    } else {
+      recoEl.textContent = '⛔ WAIT — Edge score ' + score + '/100 < ' + threshold + ' threshold';
+      recoEl.className = 'edge-recommendation wait';
+    }
+  }
+
+  return score;
+}
+
+function isEdgeAllowed(upCents, downCents) {
+  var gateEl = document.getElementById('edgeGateCheck');
+  if (!gateEl || !gateEl.checked) return true;
+  var threshold = parseInt((document.getElementById('edgeGateThresh') || {}).value || 50, 10);
+  var secRem = getSecondsRemaining();
+  var lastSpread = priceHistory.length > 0 ? priceHistory[priceHistory.length - 1].spreadCents : null;
+  var { score } = calcEdgeScore(upCents, downCents, secRem, lastSpread);
+  return score >= threshold;
+}
+
+// ── Wire up Edge Engine UI controls ─────────────
+function setupEdgeEngine() {
+  // Sliders: update display label + persist on change
+  [
+    ['filterTimeSec',  'filterTimeVal'],
+    ['filterVolPct',   'filterVolVal'],
+    ['filterMomPct',   'filterMomVal'],
+    ['edgeGateThresh', 'edgeGateVal'],
+    ['stopLossPct',    'stopLossVal'],
+    ['filterSpreadMax','filterSpreadVal'],
+    ['filterStreakMin','filterStreakVal'],
+  ].forEach(function([sliderId, valId]) {
+    var slider = document.getElementById(sliderId);
+    var valEl  = document.getElementById(valId);
+    if (!slider || !valEl) return;
+    valEl.textContent = slider.value;
+    function onSliderChange() {
+      valEl.textContent = slider.value;
+      _edgeSettings[sliderId] = slider.value;
+      _edgeSet(sliderId, slider.value);
+    }
+    slider.addEventListener('input',  onSliderChange);
+    slider.addEventListener('change', onSliderChange);
+  });
+
+  // Warmup slider — special MM:SS display
+  var warmupSlider = document.getElementById('warmupSec');
+  var warmupValEl  = document.getElementById('warmupSecVal');
+  if (warmupSlider && warmupValEl) {
+    function formatWarmup(s) {
+      s = parseInt(s, 10);
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+    warmupValEl.textContent = formatWarmup(warmupSlider.value);
+    function onWarmupChange() {
+      warmupValEl.textContent = formatWarmup(warmupSlider.value);
+      _edgeSettings['warmupSec'] = warmupSlider.value;
+      _edgeSet('warmupSec', warmupSlider.value);
+    }
+    warmupSlider.addEventListener('input',  onWarmupChange);
+    warmupSlider.addEventListener('change', onWarmupChange);
+  }
+
+  // Checkboxes: persist on change
+  [
+    'filterTimeCheck',
+    'filterTrendCheck',
+    'filterVolCheck',
+    'filterMomCheck',
+    'edgeGateCheck',
+    'stopLossCheck',
+    'filterSpreadCheck',
+    'filterStreakCheck',
+    'warmupCheck',
+  ].forEach(function(cbId) {
+    var cb = document.getElementById(cbId);
+    if (!cb) return;
+    cb.addEventListener('change', function() {
+      _edgeSettings[cbId] = cb.checked;
+      _edgeSet(cbId, cb.checked);
+    });
+  });
+
+  // P&L reset button
+  var resetBtn = document.getElementById('btnResetPnl');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+      edgePnL = { totalPnl: 0, trades: 0, wins: 0, lastReset: Date.now(), log: [] };
+      saveEdgePnL();
+      updateEdgePnLDisplay();
+      runParamOptimizer();
+    });
+  }
+
+  // Optimizer: Apply button
+  var applyBtn = document.getElementById('btnApplyOpt');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', applyOptimizerSuggestion);
+  }
+
+  // Optimizer: toggle enabled
+  var optEnabledCb = document.getElementById('optimizerEnabled');
+  if (optEnabledCb) {
+    optEnabledCb.addEventListener('change', runParamOptimizer);
+  }
+
+  updateEdgePnLDisplay();
+  runParamOptimizer();
+}
+
+// ── Main load ───────────────────────────────────
+async function load() {
+  document.getElementById('statusText').textContent = 'Fetching...';
+
+  const act = await findActive();
+  if (act) {
+    currentSlug = act.slug;
+    autoBuy99Done = { up: false, down: false }; lastFiredLevelPrice = null;
+    waitingFor99 = false;
+    claimAttemptedForSlug = null;
+    priceHistory = [];
+    currentMarketStartTs = act.startTs;
+    if (fastPollInterval) { clearInterval(fastPollInterval); fastPollInterval = null; }
+    // Clear pending auto-sell tracking from previous session
+    pendingBuyOrders = [];
+    stopAutoSellPoll();
+    // Invalidate pre-signed orders from previous market
+    invalidatePreSigned();
+    updateBuy99ButtonLabel();
+    clobTokenInfo = extractClobTokenInfo(act.event);
+    if (clobTokenInfo) log('Using CLOB for live prices');
+    document.getElementById('statusText').textContent = 'Live';
+    document.getElementById('liveDot').className = 'live-dot active';
+
+    // Render immediately with no history, then fill in history
+    render(act, []);
+    fetchHistory().then(hist => {
+      if (currentSlug === act.slug) {
+        // Build outcome streak from history
+        marketOutcomeHistory = [];
+        for (var h of hist) {
+          var hm = h.event.markets?.[0];
+          var outcome = null;
+          if (h.event.closed && hm) {
+            try {
+              var hp = JSON.parse(hm.outcomePrices || '[]');
+              var ho2 = JSON.parse(hm.outcomes || '[]');
+              var isUp0 = (ho2[0] || '').toLowerCase().includes('up');
+              var upPrice = isUp0 ? parseFloat(hp[0]) : parseFloat(hp[1]);
+              outcome = upPrice > 0.9 ? 'up' : 'down';
+            } catch (e) {}
+          }
+          marketOutcomeHistory.push({ startTs: h.startTs, outcome });
+        }
+        render(act, hist);
+      }
+    });
+
+    // Pre-sign for new market after a short delay (let render finish)
+    if (preSignEnabled && tradingClient && clobTokenInfo) {
+      setTimeout(function() {
+        if (currentSlug === act.slug && !preSignedOrders.up && !preSignInProgress) {
+          preSignBuyOrders();
+        }
+      }, 1500);
+    }
+  } else {
+    clobTokenInfo = null;
+    log('No active market found');
+    document.getElementById('statusText').textContent = 'Waiting...';
+    document.getElementById('liveDot').className = 'live-dot';
+    document.getElementById('content').innerHTML = `
+      <div class="loading">
+        <div class="loading-text">No active BTC 5m market found.<br>
+        Retrying in 15 seconds...</div>
+      </div>`;
+    setTimeout(load, 15000);
+  }
+  document.getElementById('lastUpdate').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+}
+
+// ── Init ────────────────────────────────────────
+function init() {
+  if (typeof location !== 'undefined' && location.protocol === 'file:') {
+    const box = document.getElementById('localServerHelp');
+    const link = document.getElementById('localServerUrl');
+    const path = location.pathname || '';
+    const filename = path.split('/').filter(Boolean).pop() || 'index.html';
+    if (box) box.style.display = 'block';
+    if (link) {
+      link.href = 'http://localhost:8080/' + filename;
+      link.textContent = 'http://localhost:8080/' + filename;
+    }
+  }
+  const btnConnect = document.getElementById('btnConnect');
+  const btnUseProxy = document.getElementById('btnUseProxy');
+  if (btnConnect) btnConnect.addEventListener('click', connectMetaMask);
+  if (btnUseProxy) btnUseProxy.addEventListener('click', useProxyAddress);
+  setupEdgeEngine();
+  load();
+  setInterval(refreshOdds, 1000);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
